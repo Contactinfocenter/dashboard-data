@@ -1,10 +1,6 @@
-// app.js — ES module
-// Removed Firebase imports: initializeApp, getDatabase, ref, onValue
-
-// Define the Google Apps Script URL
-const DATA_SOURCE_URL = "https://script.google.com/macros/s/AKfycbyOAHuhGLyOwPUjo5GEYqAQsCRE3mc_EQeXfL_RV_KOXF-7u5MIzGi8u-zWywSZt_yK8g/exec";
-
-// Removed firebaseConfig, app, db, and callsRef definitions
+// app.js — GitHub CSV data source (replaces Firebase)
+// Make sure PapaParse is loaded in index.html:
+// <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 Chart.register(ChartDataLabels);
 
@@ -30,14 +26,14 @@ function destroyIfExists(id){
 
 // --- FIXED COLOR MAP FOR REGIONS ---
 const REGION_COLORS = {
-  'Rural': '#4A90E2', 
-  'Urban': '#7ED321', 
-  'N/A': '#D0021B', 
-  'Unknown': '#555555' 
+  'Rural': '#4A90E2',
+  'Urban': '#7ED321',
+  'N/A': '#D0021B',
+  'Unknown': '#555555'
 };
 const FCR_COLORS=['#4A90E2','#fb923c'];
 
-// --- CHART HELPERS (No Change) ---
+// --- CHART HELPERS ---
 function createMixed(id, labels=[], datasets=[]){
   destroyIfExists(id);
   const ctx = document.getElementById(id);
@@ -49,9 +45,9 @@ function createMixed(id, labels=[], datasets=[]){
       maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
       plugins:{ legend:{ position:'top' }, datalabels: { display: false } },
-      scales: { 
-        x:{ grid: { display: false } }, 
-        y:{ beginAtZero:true, grid: { borderDash: [2, 4] } } 
+      scales: {
+        x:{ grid: { display: false } },
+        y:{ beginAtZero:true, grid: { borderDash: [2, 4] } }
       }
     }
   });
@@ -84,15 +80,12 @@ function createPie(id, labels=[], dataArr=[], colors=[], isFCR=false, isRegion=f
           align:'end',
           anchor:'end',
           offset: 12,
-          
           formatter: (value, context)=>{
             if(value===0) return '';
             const label = context.chart.data.labels[context.dataIndex];
             const total = context.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
             const valueStr = value.toLocaleString();
-            
             let perc = total>0 ? Math.round((value/total)*100) : 0;
-            
             if(isFCR){
               return `${perc}%\n${label}`;
             } else if (isRegion){
@@ -104,38 +97,11 @@ function createPie(id, labels=[], dataArr=[], colors=[], isFCR=false, isRegion=f
                 return '';
               }
             }
-          },
-            listeners: {
-                afterDraw: (context, args) => {
-                    if (!isRegion) return;
-                    const { chart } = context;
-                    const { ctx } = chart;
-                    const meta = context.label.metadata;
-                    
-                    if (!context.label.font.visible) return;
-
-                    const color = chart.data.datasets[0].backgroundColor[meta.dataIndex];
-                    const labelX = meta.textRect.x + (meta.textRect.width / 2);
-                    const arc = chart.getDatasetMeta(0).data[meta.dataIndex];
-                    const arcPosition = arc.tooltipPosition();
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1.5;
-                    
-                    ctx.moveTo(arcPosition.x, arcPosition.y);
-                    ctx.lineTo(meta.x, meta.y);
-                    ctx.lineTo(labelX, meta.y);
-
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            }
           }
         }
       }
-    });
+    }
+  });
 }
 
 function createButterflyChart(id, labels, leftData, rightData, leftLabel='Avg ACHT', rightLabel='Volume', title='Top 10 Reasons', achtColor=GENERAL_ACHT_COLOR, volumeColor=GENERAL_VOLUME_COLOR){
@@ -149,8 +115,7 @@ function createButterflyChart(id, labels, leftData, rightData, leftLabel='Avg AC
         {
           label:leftLabel,
           data:leftData,
-          // Use the passed ACHT color
-          backgroundColor:achtColor, 
+          backgroundColor:achtColor,
           barPercentage:0.8,
           categoryPercentage:0.8,
           stack:'stack0',
@@ -164,8 +129,7 @@ function createButterflyChart(id, labels, leftData, rightData, leftLabel='Avg AC
         {
           label:rightLabel,
           data:rightData,
-          // Use the passed Volume color
-          backgroundColor:volumeColor, 
+          backgroundColor:volumeColor,
           barPercentage:0.8,
           categoryPercentage:0.8,
           stack:'stack0',
@@ -202,8 +166,8 @@ function createButterflyChart(id, labels, leftData, rightData, leftLabel='Avg AC
 function initEmptyCharts(){
   createMixed("avgHourlyChart", [], []);
   createMixed("lastDayHourlyChart", [], []);
-  createPie("monthRegionPie", [], [], [], false, true); 
-  createPie("lastDayRegionPie", [], [], [], false, true); 
+  createPie("monthRegionPie", [], [], [], false, true);
+  createPie("lastDayRegionPie", [], [], [], false, true);
   createPie("monthFCRPie", [], [], [], true);
   createPie("lastDayFCRPie", [], [], [], true);
   createButterflyChart("monthButterflyChart1", [], [], [], "Avg ACHT", "Avg Daily Volume", "Top 10 Reasons: Avg Volume vs ACHT");
@@ -226,9 +190,7 @@ const fp = flatpickr("#datePicker", {
   }
 });
 
-// MODIFIED: btnReload now calls fetchData
-document.getElementById('btnReload').addEventListener('click', fetchData);
-
+document.getElementById('btnReload').addEventListener('click', ()=>{ if(availableDates.length) selectLatestDate(); });
 
 function formatTime(seconds){
   if(!seconds) return "0s";
@@ -238,50 +200,92 @@ function formatTime(seconds){
 }
 
 function getHourFromDate(dateStr){
-  try{ 
-    // Use substring to ensure only the date part is used for grouping if time isn't needed here
-    return String(new Date(dateStr).getHours()).padStart(2,'0'); 
-  }catch(e){ return "00"; }
+  try{ return String(new Date(dateStr).getHours()).padStart(2,'0'); }catch(e){ return "00"; }
 }
 
-/**
- * NEW: Function to fetch data from the Apps Script URL
- */
-async function fetchData() {
-    console.log("Fetching data from Google Apps Script...");
-    // Optional: Show a loading state here
-
-    try {
-        const response = await fetch(DATA_SOURCE_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        // The response text is the JSON string
-        const data = await response.json(); 
-        
-        // Pass the raw JSON object to the processing function
-        processSnapshot(data);
-    } catch (error) {
-        console.error("Failed to fetch data:", error);
-        // Optional: Display an error message to the user
-    } finally {
-        // Optional: Hide loading state
-    }
+function categorizeBillingCall(call){
+  return (call.comments || "Comment Not Provided").trim();
 }
 
-/**
- * Since the Google Apps Script is now providing the data in the 
- * correct date-grouped format {"calls": {"YYYY-MM-DD": {...}}}, 
- * we just need to pull the inner 'calls' object.
- */
-function normalizeData(snapshotVal){
-  if (!snapshotVal || typeof snapshotVal !== 'object') return {};
-  // Assuming the Apps Script returns { "calls": { "YYYY-MM-DD": { ... } } }
-  if (snapshotVal.calls && typeof snapshotVal.calls === 'object') {
-    return snapshotVal.calls;
+// -----------------------------------------------------------------
+// MASTER CSV CONFIG
+// -----------------------------------------------------------------
+// Update this URL to your raw master CSV
+const MASTER_CSV_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/calls-master.csv";
+
+// -----------------------------------------------------------------
+// CSV LOADER: fetch master CSV and convert into grouped snapshot
+// -----------------------------------------------------------------
+async function loadMasterCsvAndProcess(){
+  try {
+    const resp = await fetch(MASTER_CSV_URL);
+    if(!resp.ok) throw new Error("Master CSV not found: " + resp.status);
+    const csvText = await resp.text();
+
+    // Parse CSV via PapaParse
+    const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+    const rows = parsed.data || [];
+
+    // Convert rows into grouped { 'YYYY-MM-DD': { id: callObj, ... }, ...}
+    const snapshot = {}; // same shape as old Firebase grouped-by-date
+
+    rows.forEach(r => {
+      // Ensure call_date exists
+      const rawDate = r.call_date || r.call_date_time || r.date || "";
+      const datePart = rawDate ? String(rawDate).split(" ")[0] : "Unknown";
+
+      // create a unique id similar to Firebase keys
+      const ts = rawDate ? new Date(rawDate).getTime() : Date.now();
+      const phone = r.phone_number || r.phone || "unknown";
+      const id = `${phone}_${ts}`;
+
+      // Map CSV fields to the same keys your app uses
+      const callObj = {
+        ACR: r.ACR || r.acr || "",
+        "Call Reason": r["Call Reason"] || r.call_reason || r.CallReason || "",
+        "Client type": r["Client type"] || r.client_type || "",
+        Region: r.Region || r.region || "",
+        Zone: r.Zone || r.zone || "",
+        acht: Number(r.acht || r.ACHT || r.AHT || 0),
+        address3: r.address3 || r.Address3 || "",
+        call_date: rawDate || "",
+        campaign_id: r.campaign_id || r.campaign || "",
+        comments: r.comments || r.Comments || "",
+        email: r.email || "",
+        full_name: r.full_name || r.fullName || r.name || "",
+        phone_number: phone,
+        status: (r.status || "").toString()
+      };
+
+      if(!snapshot[datePart]) snapshot[datePart] = {};
+      snapshot[datePart][id] = callObj;
+    });
+
+    // Now process using existing pipeline
+    processSnapshot(snapshot);
+
+  } catch (err) {
+    console.error("Error loading master CSV:", err);
   }
-  // Fallback (for local testing or if structure changes)
-  return snapshotVal;
+}
+
+// -----------------------------------------------------------------
+// The rest of your existing logic (normalizeData, processSnapshot, renderers)
+// normalizeData kept for backward compatibility (in case snapshot already grouped)
+// -----------------------------------------------------------------
+function normalizeData(snapshotVal){
+  if(!snapshotVal) return {};
+  const normalized={};
+  const keys=Object.keys(snapshotVal);
+  const isDateGrouped = keys.every(k=>k.match(/^\d{4}-\d{2}-\d{2}$/));
+  if(isDateGrouped) return snapshotVal;
+  for(const id in snapshotVal){
+    const call=snapshotVal[id];
+    const dateStr=call.call_date ? call.call_date.split('T')[0]:"Unknown";
+    if(!normalized[dateStr]) normalized[dateStr]={};
+    normalized[dateStr][id]=call;
+  }
+  return normalized;
 }
 
 function processSnapshot(snapshotVal){
@@ -299,7 +303,8 @@ function selectLatestDate(){
   fp.setDate(selectedDate,true,"Y-m-d");
 }
 
-/** * CORE LOGIC: Uses the entire comment string as the sub-reason. * */
+/** * CORE LOGIC: Uses the entire comment string as the sub-reason. 
+  */
 function categorizeBillingCall(call){
   return (call.comments || "Comment Not Provided").trim();
 }
@@ -319,8 +324,7 @@ function renderAveragesAndMonthPies(){
     for(const id in callsForDate){
       const call=callsForDate[id];
       const hour=getHourFromDate(call.call_date);
-      // Ensure phone is always a string for set/map keys
-      const phone=String(call.phone_number); 
+      const phone=call.phone_number;
       const agent=call.full_name||call.email||"Unknown";
       const region=call.Region||"Unknown";
       const reason=call["Call Reason"]||call.call_reason||"Unknown";
@@ -332,7 +336,7 @@ function renderAveragesAndMonthPies(){
       if(!reasonStats[reason]) reasonStats[reason]={ count:0, sumAcht:0 };
       reasonStats[reason].count+=1;
       reasonStats[reason].sumAcht+=duration;
-      
+
       // Filter and categorize for billing
       if(reason === BILLING_ISSUE_REASON){
           const subReason = categorizeBillingCall(call);
@@ -371,7 +375,7 @@ function renderAveragesAndMonthPies(){
 
   const monthRegionLabels = Object.keys(regionMonth);
   const monthRegionVals = monthRegionLabels.map(k=>regionMonth[k]);
-  createPie("monthRegionPie", monthRegionLabels, monthRegionVals, [], false, true); 
+  createPie("monthRegionPie", monthRegionLabels, monthRegionVals, [], false, true);
   createPie("monthFCRPie", ['FCR','Non-FCR'], [monthFCR, monthNonFCR], FCR_COLORS, true);
 
   // --- Month Butterfly (General Reasons) ---
@@ -398,30 +402,28 @@ function renderAveragesAndMonthPies(){
 }
 
 function renderBillingMonthButterfly(billingStats, daysCount){
-    let billingDataArr = [];
-    for(const subReason in billingStats){
-        const stat = billingStats[subReason];
-        if (stat.count === 0) continue; 
-        // Use Math.ceil() for Avg Volume
-        const avgVol = Math.ceil(stat.count / daysCount);
-        // Use Math.ceil() for Avg ACHT
-        const avgAcht = stat.count > 0 ? Math.ceil(stat.sumAcht / stat.count) : 0;
-        billingDataArr.push({ subReason, leftMetric: avgAcht, rightMetric: avgVol });
-    }
-    billingDataArr.sort((a, b) => b.rightMetric - a.rightMetric);
-    const top10 = billingDataArr.slice(0, 10);
+  let billingDataArr = [];
+  for(const subReason in billingStats){
+    const stat = billingStats[subReason];
+    if (stat.count === 0) continue;
+    const avgVol = Math.ceil(stat.count / daysCount);
+    const avgAcht = stat.count > 0 ? Math.ceil(stat.sumAcht / stat.count) : 0;
+    billingDataArr.push({ subReason, leftMetric: avgAcht, rightMetric: avgVol });
+  }
+  billingDataArr.sort((a, b) => b.rightMetric - a.rightMetric);
+  const top10 = billingDataArr.slice(0, 10);
 
-    createButterflyChart(
-        "monthBillingButterfly",
-        top10.map(i => i.subReason),
-        top10.map(i => -i.leftMetric),
-        top10.map(i => i.rightMetric),
-        "Avg ACHT",
-        "Avg Daily Volume",
-        "Monthly Billing Sub-Reasons: Avg Volume vs ACHT",
-        BILLING_ACHT_COLOR, // <--- HIGH-CONTRAST MAGENTA
-        BILLING_VOLUME_COLOR // <--- HIGH-CONTRAST TEAL
-    );
+  createButterflyChart(
+    "monthBillingButterfly",
+    top10.map(i => i.subReason),
+    top10.map(i => -i.leftMetric),
+    top10.map(i => i.rightMetric),
+    "Avg ACHT",
+    "Avg Daily Volume",
+    "",
+    BILLING_ACHT_COLOR,
+    BILLING_VOLUME_COLOR
+  );
 }
 
 // --- Render Selected Date Charts (Includes Daily Billing) ---
@@ -438,7 +440,7 @@ function renderForSelectedDate(){
   for(const id in callsForDate){
     const call=callsForDate[id];
     const hour=getHourFromDate(call.call_date);
-    const ph=String(call.phone_number);
+    const ph=call.phone_number;
     const ag=call.full_name||call.email||"Unknown";
     const reg=call.Region||"Unknown";
     const reason=call["Call Reason"]||call.call_reason||"Unknown";
@@ -459,20 +461,20 @@ function renderForSelectedDate(){
     dayReasonStats[reason].count+=1;
     dayReasonStats[reason].sumAcht+=duration;
 
-      // Filter and categorize for billing
-      if(reason === BILLING_ISSUE_REASON){
-          const subReason = categorizeBillingCall(call);
-          if(!dayBillingSubReasonStats[subReason]) dayBillingSubReasonStats[subReason]={ count:0, sumAcht:0 };
-          dayBillingSubReasonStats[subReason].count+=1;
-          dayBillingSubReasonStats[subReason].sumAcht+=duration;
-      }
+    // Filter and categorize for billing
+    if(reason === BILLING_ISSUE_REASON){
+      const subReason = categorizeBillingCall(call);
+      if(!dayBillingSubReasonStats[subReason]) dayBillingSubReasonStats[subReason]={ count:0, sumAcht:0 };
+      dayBillingSubReasonStats[subReason].count+=1;
+      dayBillingSubReasonStats[subReason].sumAcht+=duration;
+    }
   }
 
   // --- KPIs (No Change) ---
   const totalCalls = Object.values(totals).reduce((a,b)=>a+b,0);
   document.getElementById('kpiTotalCalls').textContent=totalCalls.toLocaleString();
 
-  const allUnique = new Set(); Object.values(callsForDate).forEach(c=>{ if(c.phone_number) allUnique.add(String(c.phone_number)) });
+  const allUnique = new Set(); Object.values(callsForDate).forEach(c=>{ if(c.phone_number) allUnique.add(c.phone_number) });
   document.getElementById('kpiUniqueCallers').textContent = allUnique.size.toLocaleString();
 
   const allAgents = new Set(); Object.values(callsForDate).forEach(c=>{ const a=c.full_name||c.email; if(a) allAgents.add(a); });
@@ -497,25 +499,24 @@ function renderForSelectedDate(){
 
   const regLabels = Object.keys(region);
   const regVals = regLabels.map(k=>region[k]);
-  createPie("lastDayRegionPie", regLabels, regVals, [], false, true); 
+  createPie("lastDayRegionPie", regLabels, regVals, [], false, true);
   createPie("lastDayFCRPie", ['FCR','Non-FCR'], [fcr, nonFcr], FCR_COLORS, true);
 
   // --- Day Butterfly Chart (General Reasons) ---
   const dayTop = Object.keys(dayReasonStats).map(r=>{
     const s = dayReasonStats[r];
-    return { 
-          reason:r, 
-          volume:s.count, 
-          // Use Math.ceil() for Avg ACHT
-          acht: s.count > 0 ? Math.ceil(s.sumAcht / s.count) : 0 
-      };
+    return {
+      reason:r,
+      volume:s.count,
+      acht: s.count > 0 ? Math.ceil(s.sumAcht / s.count) : 0
+    };
   });
   dayTop.sort((a,b)=>b.volume-a.volume);
   const topDay10 = dayTop.slice(0,10);
   createButterflyChart(
     "dayButterflyChart",
     topDay10.map(i=>i.reason),
-    topDay10.map(i=>-i.acht), 
+    topDay10.map(i=>-i.acht),
     topDay10.map(i=>i.volume)
   );
 
@@ -524,30 +525,31 @@ function renderForSelectedDate(){
 }
 
 function renderBillingDayButterfly(billingStats){
-    const dayTop = Object.keys(billingStats).map(subReason => {
-        const s = billingStats[subReason];
-        return { 
-            subReason, 
-            volume: s.count, 
-            // Use Math.ceil() for Avg ACHT
-            acht: s.count > 0 ? Math.ceil(s.sumAcht / s.count) : 0 
-        };
-    });
-    dayTop.sort((a, b) => b.volume - a.volume);
-    const topDay10 = dayTop.slice(0, 10);
+  const dayTop = Object.keys(billingStats).map(subReason => {
+    const s = billingStats[subReason];
+    return {
+      subReason,
+      volume: s.count,
+      acht: s.count > 0 ? Math.ceil(s.sumAcht / s.count) : 0
+    };
+  });
+  dayTop.sort((a, b) => b.volume - a.volume);
+  const topDay10 = dayTop.slice(0, 10);
 
-    createButterflyChart(
-        "dayBillingButterfly",
-        topDay10.map(i => i.subReason),
-        topDay10.map(i => -i.acht),
-        topDay10.map(i => i.volume),
-        "Avg ACHT",
-        "Daily Volume",
-        "Daily Billing Sub-Reasons: Volume vs ACHT",
-        BILLING_ACHT_COLOR, // <--- HIGH-CONTRAST MAGENTA
-        BILLING_VOLUME_COLOR // <--- HIGH-CONTRAST TEAL
-    );
+  createButterflyChart(
+    "dayBillingButterfly",
+    topDay10.map(i => i.subReason),
+    topDay10.map(i => -i.acht),
+    topDay10.map(i => i.volume),
+    "Avg ACHT",
+    "Daily Volume",
+    "",
+    BILLING_ACHT_COLOR,
+    BILLING_VOLUME_COLOR
+  );
 }
 
-// NEW: Call the fetchData function to load the data when the script starts
-fetchData();
+// -----------------------------------------------------------------
+// START: load master CSV from GitHub instead of Firebase realtime
+// -----------------------------------------------------------------
+loadMasterCsvAndProcess();
