@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agent Performance — Carnival Call Analytics</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Flowbite -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .chart-container { width: 100%; height: 100%; min-height: 220px; }
+    /* small tweak so sticky tab header over canvas doesn't hide content */
+    thead.sticky { position: sticky; top: 0; z-index: 20; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-[#d9e4f5] to-[#f3f8ff] text-[#0f1724] p-6">
+  <div class="max-w-[1600px] mx-auto">
+
+    <!-- MAIN HEADER (keeps your theme) -->
+    <header class="sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between
+                   bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-6">
+      <div>
+        <div class="text-2xl font-bold tracking-wide">Agent Performance Analytics</div>
+        <div class="text-gray-600 text-sm">Data of: <strong id="selectedDate">—</strong></div>
+      </div>
+
+      <div class="mt-4 md:mt-0 flex items-center gap-4">
+        <div class="flex items-center">
+          <span class="mr-2">📅</span>
+          <input id="datePicker" placeholder="Select date"
+                 class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5" />
+        </div>
+
+        <button id="btnReload" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md">
+          Reload
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI ROW -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+        <div class="text-gray-600 text-sm">Total Calls</div>
+        <div class="text-2xl font-bold" id="kpiTotalCalls">0</div>
+      </div>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+        <div class="text-gray-600 text-sm">Active Agents</div>
+        <div class="text-2xl font-bold" id="kpiActiveAgents">0</div>
+      </div>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+        <div class="text-gray-600 text-sm">Top Performer</div>
+        <div class="text-2xl font-bold" id="kpiTopAgent">—</div>
+      </div>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+        <div class="text-gray-600 text-sm">Avg Handle Time</div>
+        <div class="text-2xl font-bold" id="kpiAvgAHT">0s</div>
+      </div>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+        <div class="text-gray-600 text-sm">Avg Repeat %</div>
+        <div class="text-2xl font-bold" id="kpiRepeatPct">0%</div>
+      </div>
+    </div>
+
+    <!-- Keep your original charts grid (first half of page) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Average Hourly Chart (left) -->
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+        <h3 class="font-semibold mb-3">Average Hourly Call Volume (All Time)</h3>
+        <div class="chart-container h-72"><canvas id="avgHourlyChart"></canvas></div>
+      </div>
+
+      <!-- Hourly Call Volume (selected) -->
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+        <h3 class="font-semibold mb-3">Hourly Call Volume (Selected Date)</h3>
+        <div class="chart-container h-72"><canvas id="lastDayHourlyChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- NEW: Tabs for Agent Analysis (Option A) -->
+    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+      <!-- Tabs control -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex gap-2">
+          <button class="tab-btn px-4 py-2 rounded-lg text-[#004c99] font-semibold border-b-2 border-[#004c99]" data-tab="aht">AHT Heatmap</button>
+          <button class="tab-btn px-4 py-2 rounded-lg text-gray-600" data-tab="login">Login Summary</button>
+          <button class="tab-btn px-4 py-2 rounded-lg text-gray-600" data-tab="repeat">Repeat Caller Rate</button>
+          <button class="tab-btn px-4 py-2 rounded-lg text-gray-600" data-tab="leader">Agent Leaderboard</button>
+          <button class="tab-btn px-4 py-2 rounded-lg text-gray-600" data-tab="summary">Call Summary Table</button>
+        </div>
+
+        <div class="text-sm text-gray-600">Agent filters:</div>
+      </div>
+
+      <!-- TABS CONTENT -->
+      <div id="tabsContent">
+        <!-- AHT Heatmap Tab -->
+        <div class="tab-panel" data-panel="aht">
+          <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="lg:col-span-1">
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+                <h4 class="font-semibold text-[#004c99] mb-3">Agents</h4>
+                <div id="agentChipContainer" class="flex flex-col gap-2 max-h-[420px] overflow-y-auto p-1"></div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-3">
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+                <h4 class="font-semibold mb-3">AHT Heatmap (Avg ACHT per hour)</h4>
+                <div class="chart-container h-96"><canvas id="ahtHeatmapCanvas"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Login Summary Tab -->
+        <div class="tab-panel hidden" data-panel="login">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2">
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+                <h4 class="font-semibold mb-3">Login Summary (first/last call per day)</h4>
+                <div id="loginSummaryContainer" class="overflow-auto max-h-[520px]"></div>
+              </div>
+            </div>
+            <div>
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+                <h4 class="font-semibold text-[#004c99] mb-3">Quick Info</h4>
+                <p class="text-sm text-gray-600">Login times are inferred from calls (first call = login, last call = logout).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Repeat Caller Rate Tab -->
+        <div class="tab-panel hidden" data-panel="repeat">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2">
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+                <h4 class="font-semibold mb-3">Repeat Caller Rate per Agent</h4>
+                <div class="chart-container h-96"><canvas id="repeatRateChart"></canvas></div>
+              </div>
+            </div>
+            <div>
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+                <h4 class="font-semibold text-[#004c99] mb-3">Method</h4>
+                <p class="text-sm text-gray-600">Repeat rate = (# callers with >1 calls handled by the agent) / (unique callers of agent)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div class="tab-panel hidden" data-panel="leader">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2">
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+                <h4 class="font-semibold mb-3">Agent Leaderboard</h4>
+                <div id="leaderboardContainer" class="space-y-3 max-h-[520px] overflow-y-auto p-1"></div>
+              </div>
+            </div>
+            <div>
+              <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+                <h4 class="font-semibold text-[#004c99] mb-3">Wallboard</h4>
+                <p class="text-sm text-gray-600">Leaderboard shows top agents by total calls. Use as a quick wallboard view.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call Summary Table Tab -->
+        <div class="tab-panel hidden" data-panel="summary">
+          <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+            <h4 class="font-semibold mb-3">Call Summary Table (per agent)</h4>
+            <div id="callSummaryTable" class="overflow-auto max-h-[520px]"></div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- end tabs container -->
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-gray-500 pt-6">
+      Carnival Call Analytics • © 2025
+    </footer>
+  </div>
+
+  <!-- Flowbite -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    // --------- FIREBASE CONFIG (from you) ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb1x31pma-pubWkJHHFjeGA_t2w4cLKY8",
+      authDomain: "dashboard-24856.firebaseapp.com",
+      databaseURL: "https://dashboard-24856-default-rtdb.firebaseio.com",
+      projectId: "dashboard-24856",
+      storageBucket: "dashboard-24856.appspot.com",
+      messagingSenderId: "484671281554",
+      appId: "1:484671281554:web:218b6fa714f61aa158894b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const callsRef = ref(db, 'calls');
+
+    // Chart instances
+    let avgHourlyChart = null; // NEW
+    let lastDayHourlyChart = null; // NEW
+    let ahtHeatmapChart = null;
+    let repeatRateChart = null;
+
+    // App state
+    let rawData = {};  // full firebase snapshot
+    let agentList = []; // sorted agents
+    let agentStats = {}; // aggregated per-agent stats
+    let selectedDate = new Date().toISOString().slice(0, 10); // NEW: Default selected date (today)
+
+    // Utilities
+    function safeNum(v){ return Number.isFinite(Number(v)) ? Number(v) : 0; }
+    
+    // Function to update the selected date display
+    function updateSelectedDateDisplay(dateStr) {
+        document.getElementById('selectedDate').textContent = dateStr;
+    }
+
+    // Function to get call data for a specific date
+    function getCallsForDate(dateStr) {
+        return rawData[dateStr] || {};
+    }
+
+    // ---------- DATA PROCESSING ----------
+    function processRawData(data) {
+      rawData = data || {};
+      agentStats = {};
+
+      // iterate date -> callId -> call
+      for (const dateKey in rawData) {
+        const calls = rawData[dateKey] || {};
+        for (const callId in calls) {
+          const call = calls[callId];
+          if (!call) continue;
+          const agent = (call.full_name || "Unknown").trim();
+          const phone = call.phone_number || null;
+          const status = call.status || "";
+          const acht = safeNum(call.acht);
+          const callDate = call.call_date ? new Date(call.call_date) : null;
+
+          if (!agentStats[agent]) {
+            agentStats[agent] = {
+              total: 0,
+              fcr: 0,
+              nonFcr: 0,
+              ahtSum: 0,
+              uniqueCallers: new Set(),
+              callerCounts: {}, // phone -> count handled by agent
+              hourly: Array.from({length:24},()=>[]),
+              firstPerDay: {}, // dateStr -> first Date
+              lastPerDay: {},  // dateStr -> last Date
+            };
+          }
+
+          const s = agentStats[agent];
+          s.total++;
+          s.ahtSum += acht;
+          if (status === "FCR") s.fcr++; else s.nonFcr++;
+
+          if (phone) {
+            s.uniqueCallers.add(phone);
+            s.callerCounts[phone] = (s.callerCounts[phone] || 0) + 1;
+          }
+
+          if (callDate) {
+            const hr = callDate.getHours();
+            s.hourly[hr].push(acht);
+
+            const dStr = callDate.toISOString().slice(0,10);
+            if (!s.firstPerDay[dStr] || callDate < s.firstPerDay[dStr]) s.firstPerDay[dStr] = callDate;
+            if (!s.lastPerDay[dStr] || callDate > s.lastPerDay[dStr]) s.lastPerDay[dStr] = callDate;
+          }
+        }
+      }
+
+      // finalize agent list
+      agentList = Object.keys(agentStats).sort((a,b)=> a.localeCompare(b));
+      renderKPIs();
+      renderAgentChips();
+      renderAllChartsAndTables();
+    }
+
+    // ---------- RENDER KPIs ----------
+    function renderKPIs() {
+      const totalCalls = Object.values(agentStats).reduce((s,a)=> s + (a.total||0), 0);
+      const activeAgents = Object.keys(agentStats).length;
+
+      // compute avg aht across agents (weighted)
+      const grandAhtSum = Object.values(agentStats).reduce((s,a)=> s + (a.ahtSum||0),0);
+      const grandCallCount = totalCalls || 1;
+      const avgAht = Math.round(grandAhtSum / grandCallCount);
+
+      // repeat pct: overall
+      let repeatCount = 0, uniqueCount = 0;
+      for (const agent of Object.keys(agentStats)) {
+        const s = agentStats[agent];
+        const repeats = Object.values(s.callerCounts).filter(c=>c>1).length;
+        repeatCount += repeats;
+        uniqueCount += s.uniqueCallers.size;
+      }
+      const repeatPct = uniqueCount ? Math.round((repeatCount / uniqueCount) * 100) : 0;
+
+      // top performer by total calls
+      const topAgent = Object.entries(agentStats).sort((a,b)=> b[1].total - a[1].total)[0]?.[0] || '—';
+
+      document.getElementById('kpiTotalCalls').textContent = totalCalls;
+      document.getElementById('kpiActiveAgents').textContent = activeAgents;
+      document.getElementById('kpiTopAgent').textContent = topAgent;
+      document.getElementById('kpiAvgAHT').textContent = avgAht + 's';
+      document.getElementById('kpiRepeatPct').textContent = repeatPct + '%';
+    }
+    
+    // ---------- CHARTS: HOURLY VOLUMES (NEW LOGIC) ----------
+    // Computes hourly call volume across all dates (for the "All Time" chart)
+    function computeAvgHourlyVolume() {
+        const hourlyCounts = Array.from({length: 24}, () => 0);
+        let totalDays = 0;
+
+        for (const dateKey in rawData) {
+            const calls = rawData[dateKey] || {};
+            const dailyHourlyCounts = Array.from({length: 24}, () => 0);
+            let hasCalls = false;
+
+            for (const callId in calls) {
+                const call = calls[callId];
+                const callDate = call.call_date ? new Date(call.call_date) : null;
+                if (callDate) {
+                    const hr = callDate.getHours();
+                    dailyHourlyCounts[hr]++;
+                    hasCalls = true;
+                }
+            }
+            
+            if (hasCalls) {
+                totalDays++;
+                dailyHourlyCounts.forEach((count, hr) => {
+                    hourlyCounts[hr] += count;
+                });
+            }
+        }
+
+        const avgHourly = hourlyCounts.map(count => totalDays ? Math.round(count / totalDays) : 0);
+        return avgHourly;
+    }
+
+    // Computes hourly call volume for the selected date
+    function computeSelectedDateHourlyVolume(dateStr) {
+        const calls = getCallsForDate(dateStr);
+        const hourlyCounts = Array.from({length: 24}, () => 0);
+
+        for (const callId in calls) {
+            const call = calls[callId];
+            const callDate = call.call_date ? new Date(call.call_date) : null;
+            if (callDate) {
+                const hr = callDate.getHours();
+                hourlyCounts[hr]++;
+            }
+        }
+        return hourlyCounts;
+    }
+
+    // Render the "Average Hourly Call Volume (All Time)" chart
+    function renderAvgHourlyChart(avgData) {
+        const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+        const ctx = document.getElementById('avgHourlyChart').getContext('2d');
+        if (avgHourlyChart) avgHourlyChart.destroy();
+
+        avgHourlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Avg Calls',
+                    data: avgData,
+                    borderColor: '#004c99',
+                    backgroundColor: 'rgba(0, 76, 153, 0.1)',
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#004c99' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Avg Calls' }, ticks: { color:'#004c99' } }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Render the "Hourly Call Volume (Selected Date)" chart
+    function renderLastDayHourlyChart(hourlyData, dateStr) {
+        const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+        const ctx = document.getElementById('lastDayHourlyChart').getContext('2d');
+        if (lastDayHourlyChart) lastDayHourlyChart.destroy();
+
+        lastDayHourlyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: `Calls on ${dateStr}`,
+                    data: hourlyData,
+                    backgroundColor: '#f39c12',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#004c99' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Total Calls' }, ticks: { color:'#004c99' } }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+
+    // ---------- AGENT CHIPS (single-select) ----------
+    function renderAgentChips() {
+      const container = document.getElementById('agentChipContainer');
+      container.innerHTML = '';
+      agentList.forEach(agent => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full min-w-[70px] text-center transition';
+        el.textContent = agent;
+        el.onclick = () => {
+          // remove selected classes
+          container.querySelectorAll('button').forEach(b=>{
+            b.classList.remove('bg-[#f39c12]','text-white','font-semibold','shadow-md');
+            b.classList.add('text-gray-700','bg-gray-100');
+          });
+          // style this
+          el.classList.add('bg-[#f39c12]','text-white','font-semibold','shadow-md');
+          el.classList.remove('text-gray-700','bg-gray-100');
+          // render heatmap for selected agent
+          renderAHTHeatmap(agent);
+        };
+        container.appendChild(el);
+      });
+
+      // auto-select first agent if exists
+      if (agentList.length) {
+        const firstBtn = container.querySelector('button');
+        if (firstBtn) firstBtn.click();
+      }
+    }
+
+    // ---------- AHT HEATMAP ----------
+    function computeAhtPerHour(agent) {
+      const s = agentStats[agent];
+      if (!s) return Array.from({length:24},()=>0);
+      return s.hourly.map(arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0);
+    }
+
+    function renderAHTHeatmap(agent) {
+      const data = computeAhtPerHour(agent);
+      const labels = Array.from({length:24},(_,i)=> `${i}:00`);
+
+      const ctx = document.getElementById('ahtHeatmapCanvas').getContext('2d');
+      if (ahtHeatmapChart) ahtHeatmapChart.destroy();
+
+      ahtHeatmapChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: `Avg ACHT (s) — ${agent}`,
+            data,
+            backgroundColor: data.map(v => v === 0 ? '#e2e8f0' : (v > 400 ? '#f39c12' : '#60a5fa')),
+            borderRadius: 4
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#004c99' } },
+            y: { beginAtZero: true, ticks: { color:'#004c99' } }
+          },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // ---------- LOGIN SUMMARY ----------
+    function renderLoginSummary() {
+      const container = document.getElementById('loginSummaryContainer');
+      const rows = [];
+
+      for (const agent of agentList) {
+        const s = agentStats[agent];
+        // compute per-day active hours array
+        const perDay = [];
+        for (const dStr in s.firstPerDay) {
+          const first = s.firstPerDay[dStr];
+          const last = s.lastPerDay[dStr] || first;
+          const hours = Math.max(0, (last - first) / 3600000); // in hours
+          perDay.push({ date: dStr, first: first.toLocaleTimeString(), last: last.toLocaleTimeString(), hours: Number(hours.toFixed(2)) });
+        }
+        // aggregate
+        const totalDays = perDay.length;
+        const avgDaily = totalDays ? (perDay.reduce((a,b)=>a+b.hours,0) / totalDays).toFixed(2) : '0.00';
+        const totalHours = perDay.reduce((a,b)=>a+b.hours,0).toFixed(2);
+
+        rows.push({ agent, totalDays, totalHours, avgDaily, perDay });
+      }
+
+      // render simple table
+      let html = '<table class="min-w-full text-sm"><thead class="bg-gray-100 sticky"><tr>' +
+                 '<th class="px-3 py-2 text-left">Agent</th>' +
+                 '<th class="px-3 py-2 text-center">Active Days</th>' +
+                 '<th class="px-3 py-2 text-center">Total Hours</th>' +
+                 '<th class="px-3 py-2 text-center">Avg Hours/Day</th>' +
+                 '</tr></thead><tbody>';
+      for (const r of rows) {
+        html += `<tr class="hover:bg-gray-50"><td class="px-3 py-2 font-semibold">${r.agent}</td>` +
+                `<td class="px-3 py-2 text-center">${r.totalDays}</td>` +
+                `<td class="px-3 py-2 text-center">${r.totalHours}</td>` +
+                `<td class="px-3 py-2 text-center">${r.avgDaily}</td></tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // ---------- REPEAT CALLER RATE ----------
+    function renderRepeatRateChart() {
+      const labels = [];
+      const data = [];
+
+      for (const agent of agentList) {
+        const s = agentStats[agent];
+        const unique = s.uniqueCallers.size || 0;
+        const repeats = Object.values(s.callerCounts).filter(c=>c>1).length;
+        const pct = unique ? Math.round((repeats / unique) * 100) : 0;
+        labels.push(agent);
+        data.push(pct);
+      }
+
+      const ctx = document.getElementById('repeatRateChart').getContext('2d');
+      if (repeatRateChart) repeatRateChart.destroy();
+
+      repeatRateChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label:'Repeat %', data, backgroundColor: labels.map(()=> '#60a5fa') }] },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { color: '#004c99' }}, y: { beginAtZero: true, ticks: { color:'#004c99' } } },
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // ---------- LEADERBOARD ----------
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboardContainer');
+      // rank by total calls, show top 20
+      const ranked = Object.entries(agentStats).map(([agent,s])=> ({ agent, total: s.total, fcr: s.fcr, avgAht: s.total?Math.round(s.ahtSum/s.total):0 })) 
+                      .sort((a,b)=> b.total - a.total)
+                      .slice(0, 50);
+      let html = '';
+      ranked.forEach((r, idx) => {
+        html += `<div class="flex items-center justify-between p-3 rounded-lg ${idx < 3 ? 'bg-[#fef3c7]' : 'bg-white/60'} shadow">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-[#004c99] text-white font-bold">${idx+1}</div>
+                    <div>
+                      <div class="font-semibold">${r.agent}</div>
+                      <div class="text-xs text-gray-600">Calls: ${r.total} • FCR: ${r.fcr} • AHT: ${r.avgAht}s</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-lg font-bold">${r.total}</div>
+                    <div class="text-xs text-gray-500">calls</div>
+                  </div>
+                </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    // ---------- CALL SUMMARY TABLE ----------
+    function renderCallSummaryTable() {
+      const container = document.getElementById('callSummaryTable');
+      let html = '<table class="min-w-full text-sm"><thead class="bg-gray-100 sticky"><tr>' +
+                 '<th class="px-3 py-2 text-left">Agent</th>' +
+                 '<th class="px-3 py-2 text-center">Total Calls</th>' +
+                 '<th class="px-3 py-2 text-center">Unique Callers</th>' +
+                 '<th class="px-3 py-2 text-center">FCR</th>' +
+                 '<th class="px-3 py-2 text-center">Avg AHT</th>' +
+                 '</tr></thead><tbody>';
+      for (const agent of agentList) {
+        const s = agentStats[agent];
+        const avgAht = s.total ? Math.round(s.ahtSum / s.total) : 0;
+        html += `<tr class="hover:bg-gray-50"><td class="px-3 py-2 font-semibold">${agent}</td>` +
+                `<td class="px-3 py-2 text-center">${s.total}</td>` +
+                `<td class="px-3 py-2 text-center">${s.uniqueCallers.size}</td>` +
+                `<td class="px-3 py-2 text-center">${s.fcr}</td>` +
+                `<td class="px-3 py-2 text-center">${avgAht}s</td></tr>`;
+      }
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    // ---------- RENDER ALL (UPDATED LOGIC) ----------
+    function renderAllChartsAndTables() {
+        // Determine the most recent date from the loaded data for the 'Selected Date' chart
+        const allDates = Object.keys(rawData).sort().reverse();
+        // Use the stored selectedDate or the most recent available date
+        const dateToDisplay = allDates.includes(selectedDate) ? selectedDate : allDates[0] || new Date().toISOString().slice(0, 10);
+
+        // Update the global state and display
+        selectedDate = dateToDisplay;
+        updateSelectedDateDisplay(selectedDate);
+        
+        // RENDER MAIN CHARTS
+        const avgData = computeAvgHourlyVolume();
+        renderAvgHourlyChart(avgData);
+
+        const hourlyData = computeSelectedDateHourlyVolume(selectedDate);
+        renderLastDayHourlyChart(hourlyData, selectedDate);
+        
+        // RENDER TABULAR/OTHER DATA
+        renderLoginSummary();
+        renderRepeatRateChart();
+        renderLeaderboard();
+        renderCallSummaryTable();
+        
+        // Ensure the initial AHT heatmap renders for the first agent
+        const firstAgent = agentList[0];
+        if (firstAgent && document.querySelector('.tab-btn[data-tab="aht"]').classList.contains('border-[#004c99]')) {
+            renderAHTHeatmap(firstAgent);
+        }
+    }
+
+    // ---------- TABS behavior ----------
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      const tab = btn.dataset.tab;
+      // style active
+      document.querySelectorAll('.tab-btn').forEach(b=>{
+        b.classList.remove('text-[#004c99]','font-semibold','border-b-2','border-[#004c99]');
+        b.classList.add('text-gray-600');
+      });
+      btn.classList.add('text-[#004c99]','font-semibold','border-b-2','border-[#004c99]');
+      // switch panels
+      document.querySelectorAll('.tab-panel').forEach(p=>{
+        p.classList.add('hidden');
+      });
+      const panel = document.querySelector(`.tab-panel[data-panel="${tab}"]`);
+      if (panel) panel.classList.remove('hidden');
+      // if switching to certain tabs, re-render some charts to ensure proper sizing
+      if (tab === 'repeat') { if (repeatRateChart) repeatRateChart.resize(); }
+      if (tab === 'aht') { if (ahtHeatmapChart) ahtHeatmapChart.resize(); }
+    });
+
+    // default tab set
+    setTimeout(()=> {
+      const defaultBtn = document.querySelector('.tab-btn[data-tab="aht"]');
+      if (defaultBtn) defaultBtn.click();
+    }, 50);
+
+    // ---------- FIREBASE: load data ----------
+    onValue(callsRef, (snap) => {
+      const data = snap.val() || {};
+      processRawData(data);
+    });
+
+    // Reload button
+    document.getElementById('btnReload').addEventListener('click', ()=>{
+      // force refresh by re-processing rawData
+      processRawData(rawData);
+    });
+
+    // basic datePicker (flatpickr optional if you load it)
+    try {
+      const fp = flatpickr('#datePicker', { mode:'single', altInput:true, altFormat:'F j, Y', dateFormat:'Y-m-d' });
+      fp.config.onChange.push((selectedDates, dateStr)=> {
+        // Update state and re-render the two main hourly charts
+        if (dateStr) {
+          selectedDate = dateStr; // Update the global selected date
+          updateSelectedDateDisplay(selectedDate);
+
+          // Re-render the Hourly Volume (Selected Date) chart with the new filter
+          const hourlyData = computeSelectedDateHourlyVolume(selectedDate);
+          renderLastDayHourlyChart(hourlyData, selectedDate);
+        }
+      });
+    } catch(e){ /* flatpickr not loaded — safe to ignore */ }
+
+    // initial: empty render
+    renderKPIs();
+    renderAllChartsAndTables();
+
+  </script>
+</body>
+</html>

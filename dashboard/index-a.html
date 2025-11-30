@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Carnival Call Analytics</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Flowbite CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .chart-container { width:100%; height:100%; min-height: 240px; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-[#d9e4f5] to-[#f3f8ff] text-[#0f1724] p-6">
+
+  <div class="max-w-[1600px] mx-auto">
+
+    <main class="main w-full">
+
+<!-- HEADER -->
+<div class="header sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between 
+            bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl 
+            p-5 mb-6">
+  <div>
+    <div class="text-2xl font-bold tracking-wide">Call Analytics</div>
+    <div class="text-gray-600 text-sm">Data of: <strong id="selectedDate">—</strong></div>
+  </div>
+
+  <div class="mt-4 md:mt-0 flex items-center gap-4">
+    <div class="flex items-center">
+      <span class="mr-2">📅</span>
+      <input id="datePicker" 
+             placeholder="Select date"
+             class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm 
+                    rounded-lg border border-white/40 p-2.5" />
+    </div>
+
+    <button id="btnReload" 
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium 
+                   rounded-lg shadow-md transition">
+      Latest
+    </button>
+  </div>
+</div>
+
+
+      <!-- KPI ROW -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+          <div class="text-gray-600 text-sm">Total Calls</div>
+          <div class="text-2xl font-bold" id="kpiTotalCalls">0</div>
+        </div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+          <div class="text-gray-600 text-sm">Unique Callers</div>
+          <div class="text-2xl font-bold" id="kpiUniqueCallers">0</div>
+        </div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+          <div class="text-gray-600 text-sm">FCR Rate</div>
+          <div class="text-2xl font-bold" id="kpiFCRPercent">0%</div>
+        </div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+          <div class="text-gray-600 text-sm">Active Agents</div>
+          <div class="text-2xl font-bold" id="kpiActiveAgents">0</div>
+        </div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
+          <div class="text-gray-600 text-sm">Avg Handle Time</div>
+          <div class="text-2xl font-bold" id="kpiAvgHandleTime">0s</div>
+        </div>
+      </div>
+
+      <!-- CHART GRID: 2 columns on lg and up -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Row 1 -->
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Average Hourly Call Volume (All Time)</h3>
+          <div class="chart-container h-72">
+            <canvas id="avgHourlyChart"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Hourly Call Volume (Selected Date)</h3>
+          <div class="chart-container h-72">
+            <canvas id="lastDayHourlyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Total Calls by Region (Month Total)</h3>
+          <div class="chart-container h-72">
+            <canvas id="monthRegionPie"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Calls by Region (Selected Date)</h3>
+          <div class="chart-container h-72">
+            <canvas id="lastDayRegionPie"></canvas>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">FCR vs Non-FCR (Month Total)</h3>
+          <div class="chart-container h-72">
+            <canvas id="monthFCRPie"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">FCR vs Non-FCR (Selected Date)</h3>
+          <div class="chart-container h-72">
+            <canvas id="lastDayFCRPie"></canvas>
+          </div>
+        </div>
+
+        <!-- Butterfly charts (wider, but still two-column grid) -->
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Top 10 Reasons: Avg Volume vs ACHT (Monthly)</h3>
+          <div class="chart-container h-96">
+            <canvas id="monthButterflyChart1"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Selected Date Volume vs Avg ACHT</h3>
+          <div class="chart-container h-96">
+            <canvas id="dayButterflyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Billing-specific charts (left empty until you add billing logic) -->
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Billing Issue: Avg Volume vs ACHT (Monthly)</h3>
+          <div class="chart-container h-96">
+            <canvas id="monthBillingButterfly"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
+          <h3 class="font-semibold mb-3">Billing: Selected Date Volume vs Avg ACHT</h3>
+          <div class="chart-container h-96">
+            <canvas id="dayBillingButterfly"></canvas>
+          </div>
+        </div>
+
+      </div> <!-- end grid -->
+
+    </main>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Chart DataLabels plugin (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+  <!-- Flowbite JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+  <!-- app module (ES module) -->
+  <script type="module" src="./app-a.js"></script>
+
+</body>
+</html>
