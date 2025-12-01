@@ -2,6 +2,8 @@
 
 // --- STATIC JSON CONFIG ---
 const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
+// *** FIX: Added correct URL for CSV file ***
+const CLIENT_BASE_CSV_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/client_count.csv"; 
 
 // --- EXTERNAL LIBS EXPECTED IN THE PAGE (MUST BE LOADED VIA <script>) ---
 // 1) Chart.js (or ChartDataLabels if used)
@@ -413,11 +415,12 @@ function computeZoneAggregates(keyValue, dateArray, filterFunc = passZoneFilters
     return { tot, uniq: uniqSet.size };
 }
 
-/* ---------------- Load client base CSV (Kept as is) ---------------- */
+/* ---------------- Load client base CSV (FIXED) ---------------- */
 function loadClientBase() {
     // NOTE: This assumes Papa Parse has been loaded via a script tag in the HTML.
     return new Promise((resolve, reject) => {
-        Papa.parse('data/client_count.csv', {
+        // *** CHANGE APPLIED HERE to use the correct URL ***
+        Papa.parse(CLIENT_BASE_CSV_URL, {
             download: true,
             header: true,
             skipEmptyLines: true,
