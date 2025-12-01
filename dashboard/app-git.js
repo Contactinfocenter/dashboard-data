@@ -1,27 +1,14 @@
-// app-git.js — ES Module (CSV/Git version)
-// Replaces Firebase with PapaParse + GitHub RAW CSV while keeping ALL charts & functions intact.
+// app-git.js — ES Module (JSON/Git version)
+// FIXES: Data fetching, flattening, unique caller/region calculation based on nested JSON.
 
 // --- External libraries expected in the page ---
 // 1) Chart.js + ChartDataLabels loaded already
 // 2) flatpickr loaded already
 
-// Import PapaParse directly as an ES module (requires <script type="module"> in HTML)
-
-
-const MASTER_CSV_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/calls-master.csv";
-
-// --- REMOVED: ensurePapa() function and PAPAPARSE_CDN as they are replaced by the ES import ---
-// --- Note: The HTML must load this file using <script type="module" src="app-git.js"></script> ---
 // ------------------------------------------------------------------
-
-Chart.register(ChartDataLabels);
-
-const charts = {};
-let selectedDate = null;
-let groupedData = {};
-let availableDates = [];
-
 // --- CONFIGURATION ---
+const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
+
 const BILLING_ISSUE_REASON = "Billing Issue";
 
 // --- COLOR DEFINITIONS ---
@@ -38,7 +25,16 @@ const REGION_COLORS = {
 };
 const FCR_COLORS=['#4A90E2','#fb923c'];
 
-// --- CHART HELPERS (Kept verbatim) ---
+// ------------------------------------------------------------------
+
+Chart.register(ChartDataLabels);
+
+const charts = {};
+let selectedDate = null;
+let groupedData = {};
+let availableDates = [];
+
+// --- CHART HELPERS (No Change) ---
 function destroyIfExists(id){
   if(charts[id]) { charts[id].destroy(); delete charts[id]; }
 }
@@ -92,19 +88,18 @@ function createPie(id, labels=[], dataArr=[], colors=[], isFCR=false, isRegion=f
           
           formatter: (value, context)=>{
             if(value===0) return '';
-            const label = context.chart.data.labels[context.dataIndex];
             const total = context.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
             const valueStr = value.toLocaleString();
             
             let perc = total>0 ? Math.round((value/total)*100) : 0;
             
             if(isFCR){
-              return `${perc}%\n${label}`;
+              return `${perc}%\n${context.chart.data.labels[context.dataIndex]}`;
             } else if (isRegion){
-              return `${valueStr}\n${label}`;
+              return `${valueStr}\n${context.chart.data.labels[context.dataIndex]}`;
             } else {
               if(perc > 1){
-                return `${valueStr}\n${label}`;
+                return `${valueStr}\n${context.chart.data.labels[context.dataIndex]}`;
               } else {
                 return '';
               }
@@ -189,7 +184,7 @@ function initEmptyCharts(){
 }
 initEmptyCharts();
 
-// --- DATE PICKER & HELPERS (Kept verbatim) ---
+// --- DATE PICKER & HELPERS (No Change) ---
 const fp = flatpickr("#datePicker", {
   dateFormat:"Y-m-d",
   allowInput:true,
@@ -204,8 +199,8 @@ const fp = flatpickr("#datePicker", {
 
 document.getElementById('btnReload').addEventListener('click', ()=>{
   if(availableDates.length) selectLatestDate();
-  // re-fetch CSV
-  fetchCsvAndProcess();
+  // re-fetch data
+  fetchDataAndProcess(); 
 });
 
 function formatTime(seconds){
@@ -219,37 +214,52 @@ function getHourFromDate(dateStr){
   try{ return String(new Date(dateStr).getHours()).padStart(2,'0'); }catch(e){ return "00"; }
 }
 
-// Simplified normalizer: The original normalizeData is kept for legacy support if needed, 
-// but it's not strictly necessary if we rely on normalizeFromRows, which is now simplified/integrated.
-// Keeping processSnapshot to call normalizeFromRows, which is the preferred CSV processing path.
-
+// ------------------------------------------------------------------
+// --- DATA NORMALIZATION (Crucial Fixes Here) ---
+// ------------------------------------------------------------------
 function normalizeFromRows(rows){
-  // This function is now the primary data cleaning/structuring step
+  // This function now expects a flattened array of call objects.
   const normalized = {};
   rows.forEach((row, idx) => {
     // Map and clean data points
-    const dateStr = row.call_date ? String(row.call_date).split('T')[0] : 'Unknown';
-    const id = row.id || `${dateStr}_${idx}`;
+    const call_date_val = row.call_date || '';
+    const dateStr = call_date_val ? String(call_date_val).split(' ')[0] : 'Unknown';
+    
+    // Generate a consistent ID
+    const id = row.phone_number ? `${row.phone_number}_${row.acht}_${idx}` : `${dateStr}_${idx}`; 
+    
+    // --- FIX 1: CLEANING PHONE NUMBER ---
+    // Convert float phone_number to integer/string for reliable counting/uniqueness
+    const rawPhoneNumber = row.phone_number;
+    const cleanedPhoneNumber = rawPhoneNumber ? String(Math.floor(Number(rawPhoneNumber))) : '';
+
+    // --- FIX 2: HANDLE LOWERCASE 'region' KEY for Region Charts ---
+    // Prioritize the lowercase 'region' key, then fallback to others.
+    // Note: Your JSON sample uses 'region' (lowercase)
+    const callRegion = row.region || row.Region || row.zone || 'Unknown';
     
     normalized[dateStr] = normalized[dateStr] || {};
     normalized[dateStr][id] = {
         // Mandatory fields
-        call_date: row.call_date,
-        phone_number: row.phone_number,
+        call_date: call_date_val,
+        phone_number: cleanedPhoneNumber, // Use cleaned phone number
         status: (row.status||'').toUpperCase(),
         full_name: row.full_name || row.email || 'Unknown',
-        // Normalization for different column names
-        Region: row.Region || row.Zone || 'Unknown', 
+        
+        // Use the cleaned region name (Fixes region pie charts)
+        Region: callRegion, 
+        
+        // Call Reason: Handles mixed case "Call Reason" vs "Call Reason"
         "Call Reason": row["Call Reason"] || row.call_reason || 'Unknown',
-        // ACHT normalization
-        acht: Number(row.length_in_sec || row.ACR || row.acht || 0),
+        
+        // ACHT normalization - handles 'acht' (lowercase) or 'ACR' (uppercase)
+        acht: Number(row.acht || row.ACR || row.length_in_sec || 0), 
         comments: row.comments || 'Comment Not Provided'
     };
   });
   return normalized;
 }
 
-// Original processSnapshot function, renamed to processData to reflect source change
 function processData(data){
   groupedData = data;
   availableDates = Object.keys(groupedData).sort();
@@ -269,7 +279,7 @@ function categorizeBillingCall(call){
   return (call.comments || "Comment Not Provided").trim();
 }
 
-// --- Averages & Monthly Charts (Kept verbatim) ---
+// --- Averages & Monthly Charts (No Change) ---
 function renderAveragesAndMonthPies(){
   const sumTotal={}, sumUnique={}, sumAgents={};
   for(let i=0;i<24;i++){ const h=String(i).padStart(2,'0'); sumTotal[h]=0; sumUnique[h]=0; sumAgents[h]=0; }
@@ -285,12 +295,12 @@ function renderAveragesAndMonthPies(){
       const hour=getHourFromDate(call.call_date);
       const phone=call.phone_number;
       const agent=call.full_name||call.email||"Unknown";
-      const region=call.Region||"Unknown";
+      const region=call.Region||"Unknown"; // Uses normalized 'Region'
       const reason=call["Call Reason"]||call.call_reason||"Unknown";
       const status=(call.status||"").toUpperCase();
       const duration=Number(call.acht)||0;
 
-      regionMonth[region]=(regionMonth[region]||0)+1;
+      regionMonth[region]=(regionMonth[region]||0)+1; // Total Calls by Region (Month Total) FIX
 
       if(!reasonStats[reason]) reasonStats[reason]={ count:0, sumAcht:0 };
       reasonStats[reason].count+=1;
@@ -378,12 +388,12 @@ function renderBillingMonthButterfly(billingStats, daysCount){
         "Avg ACHT",
         "Avg Daily Volume",
         "",
-        BILLING_ACHT_COLOR, // <--- HIGH-CONTRAST MAGENTA
-        BILLING_VOLUME_COLOR // <--- HIGH-CONTRAST TEAL
+        BILLING_ACHT_COLOR, 
+        BILLING_VOLUME_COLOR 
     );
 }
 
-// --- Render Selected Date Charts (Kept verbatim) ---
+// --- Render Selected Date Charts (No Change) ---
 function renderForSelectedDate(){
   if(!selectedDate || !groupedData[selectedDate]) return;
   const callsForDate = groupedData[selectedDate];
@@ -395,9 +405,9 @@ function renderForSelectedDate(){
   for(const id in callsForDate){
     const call=callsForDate[id];
     const hour=getHourFromDate(call.call_date);
-    const ph=call.phone_number;
+    const ph=call.phone_number; // This is the cleaned string from normalizeFromRows
     const ag=call.full_name||call.email||"Unknown";
-    const reg=call.Region||"Unknown";
+    const reg=call.Region||"Unknown"; // Uses normalized 'Region'
     const reason=call["Call Reason"]||call.call_reason||"Unknown";
     const st=(call.status||"").toUpperCase();
     const duration=Number(call.acht)||0;
@@ -406,7 +416,8 @@ function renderForSelectedDate(){
     if(!unique[hour]) unique[hour]=new Set(); if(ph) unique[hour].add(ph);
     if(!agents[hour]) agents[hour]=new Set(); agents[hour].add(ag);
 
-    region[reg]=(region[reg]||0)+1;
+    region[reg]=(region[reg]||0)+1; // Calls by Region (Selected Date) FIX
+
     if(st==="FCR") fcr++; else nonFcr++;
 
     totalAcht+=duration;
@@ -425,12 +436,12 @@ function renderForSelectedDate(){
       }
   }
 
-  // --- KPIs (No Change) ---
+  // --- KPIs (Total Calls & Unique Callers FIX) ---
   const totalCalls = Object.values(totals).reduce((a,b)=>a+b,0);
-  document.getElementById('kpiTotalCalls').textContent=totalCalls.toLocaleString();
+  document.getElementById('kpiTotalCalls').textContent=totalCalls.toLocaleString(); // Total Calls count FIX
 
   const allUnique = new Set(); Object.values(callsForDate).forEach(c=>{ if(c.phone_number) allUnique.add(c.phone_number) });
-  document.getElementById('kpiUniqueCallers').textContent = allUnique.size.toLocaleString();
+  document.getElementById('kpiUniqueCallers').textContent = allUnique.size.toLocaleString(); // Unique Callers count FIX
 
   const allAgents = new Set(); Object.values(callsForDate).forEach(c=>{ const a=c.full_name||c.email; if(a) allAgents.add(a); });
   document.getElementById('kpiActiveAgents').textContent = allAgents.size.toLocaleString();
@@ -499,45 +510,61 @@ function renderBillingDayButterfly(billingStats){
         "Avg ACHT",
         "Daily Volume",
         "",
-        BILLING_ACHT_COLOR, // <--- HIGH-CONTRAST MAGENTA
-        BILLING_VOLUME_COLOR // <--- HIGH-CONTRAST TEAL
+        BILLING_ACHT_COLOR, 
+        BILLING_VOLUME_COLOR 
     );
 }
 
 
-// --- CSV fetching + processing ---
-async function fetchCsvAndProcess(){
+// ------------------------------------------------------------------
+// --- JSON fetching + processing (Data Flattening) ---
+// ------------------------------------------------------------------
+async function fetchDataAndProcess(){
     try {
-        const res = await fetch(MASTER_CSV_URL);
+        const res = await fetch(MASTER_DATA_URL);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const text = await res.text();
         
-        Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results){
-                const grouped = normalizeFromRows(results.data);
-                processData(grouped);
-            },
-            error: function(err){ 
-                console.error('PapaParse error', err); 
-                // Optionally display an error message to the user
+        // Step 1: Parse the full JSON object
+        const wrapperObject = await res.json(); 
+        
+        // Step 2: Extract the object containing call data grouped by date
+        const callsByDate = wrapperObject.calls; 
+
+        if (!callsByDate || typeof callsByDate !== 'object' || Array.isArray(callsByDate)) {
+            throw new Error("JSON structure error: 'calls' object not found or is not the expected object format.");
+        }
+        
+        // Step 3: Flatten the deeply nested objects into a single array
+        let allCallRecords = [];
+        
+        for (const dateKey in callsByDate) {
+            const dayRecords = callsByDate[dateKey];
+            
+            if (typeof dayRecords === 'object' && dayRecords !== null) {
+                const records = Object.values(dayRecords);
+                allCallRecords = allCallRecords.concat(records);
             }
-        });
+        }
+
+        // Step 4: Pass the flattened array to normalizeFromRows
+        const grouped = normalizeFromRows(allCallRecords); 
+        processData(grouped);
 
     } catch (error) {
-        console.error('Error fetching CSV:', error);
-        // Handle fetch error
+        console.error('Error fetching or processing JSON data:', error);
+        // Handle fetch/JSON parse error
+        const statusEl = document.getElementById('selectedDate');
+        if(statusEl) statusEl.textContent = `ERROR: Failed to load data. Check console. ${error.message}`;
     }
 }
 
 
 // Initial load
-fetchCsvAndProcess();
+fetchDataAndProcess();
 
 // export for debugging (optional)
 window.__dashboard = {
-  fetchCsvAndProcess,
+  fetchDataAndProcess,
   groupedData,
   charts
 };
