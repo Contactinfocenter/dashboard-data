@@ -20,8 +20,8 @@ const BILLING_VOLUME_COLOR = '#00C9A7'; // Bright Teal
 const REGION_COLORS = {
   'Rural': '#4A90E2', 
   'Urban': '#7ED321', 
-  'N/A': '#D0021B',   
-  'Unknown': '#555555' 
+  'N/A': '#555555',   
+  'Unknown': '#D0021B' 
 };
 const FCR_COLORS=['#4A90E2','#fb923c'];
 
