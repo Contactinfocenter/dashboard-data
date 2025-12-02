@@ -1,14 +1,9 @@
-// app-git-firebase-converted.js - Converted from Firebase to Static JSON/GitHub Fetch
+// app-js -Static JSON/GitHub Fetch
 
 // --- STATIC JSON CONFIG ---
 const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
-// *** FIX: Added correct URL for CSV file ***
-const CLIENT_BASE_CSV_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/client_count.csv"; 
 
-// --- EXTERNAL LIBS EXPECTED IN THE PAGE (MUST BE LOADED VIA <script>) ---
-// 1) Chart.js (or ChartDataLabels if used)
-// 2) flatpickr
-// 3) Papa Parse (for CSV)
+const CLIENT_BASE_CSV_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/client_count.csv"; 
 
 /* ---------------- DOM & STATE (Kept as is) ---------------- */
 let dateFilters = {
@@ -77,13 +72,11 @@ function normalizeKey(s) {
 }
 
 function getCallerId(item, docKey) {
-    // FIX: Using normalized phone_number (string) if available, otherwise fallback
     return String(item?.phone_number || item?.Client_ID || item?.email || docKey);
 }
 
 function formatRegionName(region) { return region || 'N/A'; }
 
-// --- DATA NORMALIZATION (Crucial Fixes from previous script) ---
 function normalizeFromRows(rows){
     // This function expects a flattened array of call objects.
     const normalized = {};
@@ -96,13 +89,11 @@ function normalizeFromRows(rows){
         // Generate a consistent ID (using phone number + timestamp for uniqueness)
         const id = row.phone_number && row.call_date ? `${row.phone_number}_${new Date(row.call_date).getTime()}` : `${dateStr}_${idx}`; 
         
-        // --- FIX 1: CLEANING PHONE NUMBER ---
         // Convert float phone_number to string for reliable counting/uniqueness
         const rawPhoneNumber = row.phone_number;
         const cleanedPhoneNumber = rawPhoneNumber ? String(Math.floor(Number(rawPhoneNumber))) : '';
 
-        // --- FIX 2: HANDLE LOWERCASE 'region' KEY for Region Charts & Filtering ---
-        // Your JSON sample uses 'region' (lowercase) and 'zone'
+        // JSON sample uses 'region' (lowercase) and 'zone'
         const callRegion = row.region || row.Region || 'N/A';
         const callZone = row.zone || row.Zone || 'N/A';
         
@@ -134,7 +125,7 @@ function normalizeFromRows(rows){
 }
 
 
-/* ---------------- Date Range Helpers (Kept as is) ---------------- */
+/* ---------------- Date Range Helpers ---------------- */
 
 function getFilteredDates(filterSet, defaultN) {
     const datesAvailable = Object.keys(rawData).sort();
@@ -160,7 +151,7 @@ function getPreviousPeriodDates(currentDates, allDates) {
     const firstDateStr = currentDates[0];
     const firstDateIndex = allDates.indexOf(firstDateStr);
 
-    if (firstDateIndex <= 0) return []; // Cannot find start date or it's the first available date
+    if (firstDateIndex <= 0) return []; 
     
     // Slice the array to get the 'periodLength' dates immediately preceding the start date
     const previousPeriodStart = Math.max(0, firstDateIndex - periodLength);
@@ -197,7 +188,7 @@ const valueLabelPlugin = {
     }
 };
 
-/* ---------------- CHART HELPERS (Kept as is) ---------------- */
+/* ---------------- CHART HELPERS ---------------- */
 function createOrUpdateChart(labels, totalData, uniqueData, canvas) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -251,7 +242,7 @@ function createOrUpdateRuralZoneChart(labels, totalData, uniqueData) {
     createOrUpdateChart(labels, totalData, uniqueData, ruralZoneCanvas);
 }
 
-/* ---------------- FILTER & AGGREGATE HELPERS (Kept as is) ---------------- */
+/* ---------------- FILTER & AGGREGATE HELPERS ---------------- */
 function buildFilterLists(recordsByDate) {
     const regions = new Set();
     const reasons = new Set();
@@ -341,7 +332,7 @@ function updateRuralChipVisuals() {
 
 function passFilters(row) {
     if (!row) return false;
-    // Uses normalized 'Region' key
+    // normalized 'Region' key
     const region = String(row.Region || 'N/A'); 
     const reason = String(row["Call Reason"] || 'N/A');
     if (filters.regions.size > 0 && !filters.regions.has(region)) return false;
@@ -351,7 +342,7 @@ function passFilters(row) {
 
 function passZoneFilters(row) {
     if (!row) return false;
-    // Uses normalized 'Zone' key
+    // normalized 'Zone' key
     const zone = String(row.Zone || 'N/A'); 
     const reason = String(row["Call Reason"] || 'N/A');
     if (zoneFilters.size > 0 && !zoneFilters.has(zone)) return false;
@@ -361,7 +352,7 @@ function passZoneFilters(row) {
 
 function passRuralFilters(row) {
     if (!row) return false;
-    // Uses normalized 'Region' key
+    // normalized 'Region' key
     if (String(row.Region).trim() !== "Rural") return false; 
     const zone = String(row.Zone || "N/A");
     const reason = String(row["Call Reason"] || "N/A");
@@ -406,7 +397,7 @@ function computeZoneAggregates(keyValue, dateArray, filterFunc = passZoneFilters
         const group = rawData[dStr] || {};
         for (const docKey in group) {
             const row = group[docKey];
-            // Uses normalized 'Zone' key
+            // normalized 'Zone' key
             if (!row || String(row.Zone || 'N/A') !== keyValue) continue; 
             if (!filterFunc(row)) continue;
             tot++; uniqSet.add(getCallerId(row, docKey));
@@ -415,11 +406,20 @@ function computeZoneAggregates(keyValue, dateArray, filterFunc = passZoneFilters
     return { tot, uniq: uniqSet.size };
 }
 
-/* ---------------- Load client base CSV (FIXED) ---------------- */
+function computeDailyUniqueCount(dateStr, filterFunc) {
+    const dailyUniqueSet = new Set();
+    const group = rawData[dateStr] || {};
+    for (const docKey in group) {
+        const row = group[docKey];
+        if (!row || !filterFunc(row)) continue;
+        dailyUniqueSet.add(getCallerId(row, docKey));
+    }
+    return dailyUniqueSet.size;
+}
+
+/* ---------------- Load client base CSV ---------------- */
 function loadClientBase() {
-    // NOTE: This assumes Papa Parse has been loaded via a script tag in the HTML.
     return new Promise((resolve, reject) => {
-        // *** CHANGE APPLIED HERE to use the correct URL ***
         Papa.parse(CLIENT_BASE_CSV_URL, {
             download: true,
             header: true,
@@ -445,7 +445,7 @@ function loadClientBase() {
     });
 }
 
-/* ---------------- RENDER (Main, Zone, Rural) (Kept as is) ---------------- */
+/* ---------------- RENDER (Main, Zone, Rural)---------------- */
 // --- Main Render ---
 function render() {
     const datesAvailable = Object.keys(rawData).sort();
@@ -662,8 +662,25 @@ function render() {
 
     updateChipVisuals();
 }
+// --- Update Page Title with Date Range ---
+function updatePageTitle() {
+    let title = "Call Analytics";
 
-// --- Zone Render (Urban) (Kept as is) ---
+    if (dateFilters.main.start && dateFilters.main.end) {
+        const format = { day: 'numeric', month: 'short', year: 'numeric' };
+        const from = dateFilters.main.start.toLocaleDateString(undefined, format);
+        const to   = dateFilters.main.end.toLocaleDateString(undefined, format);
+        title += ` • ${from} – ${to}`;
+    } else {
+        title += " • Last 7 Days";
+    }
+
+    document.title = title;
+}
+
+updatePageTitle();
+
+// --- Zone Render (Urban) ---
 function renderZoneSection() {
     const datesAvailable = Object.keys(rawData).sort();
     if (datesAvailable.length === 0) {
@@ -676,47 +693,108 @@ function renderZoneSection() {
     const N = 7;
     const currentFilteredDates = getFilteredDates(dateFilters.zone, N);
     const lastDates = currentFilteredDates;
-    
     const prevDates = getPreviousPeriodDates(lastDates, allDates);
 
     const latestDateStr = lastDates[lastDates.length - 1];
     const [latestYear, latestMonth] = latestDateStr ? latestDateStr.split('-').map(Number) : [0, 0];
-    const mtdDates = allDates.filter(d => { const [y, m] = d.split('-').map(Number); return y === latestYear && m === latestMonth; });
-    
+    const mtdDates = allDates.filter(d => {
+        const [y, m] = d.split('-').map(Number);
+        return y === latestYear && m === latestMonth;
+    });
+
     const cwaText = (dateFilters.zone.start && dateFilters.zone.end) ? 'CFA' : 'CWA';
     const pwaText = (dateFilters.zone.start && dateFilters.zone.end) ? 'PBA' : 'PWA';
 
     const today = new Date();
     const perZone = {};
+
+    // Initialize per-zone structure
     for (const z of zonesOfInterest) {
         const normalized = normalizeKey(z);
         const cb = clientBaseMapNormalized[normalized];
-        perZone[z] = { 
-            clientBase: Number.isFinite(cb) ? cb : 0, 
-            dailyTotals: lastDates.map(() => 0), 
-            dailyUniques: lastDates.map(() => 0) 
+        perZone[z] = {
+            clientBase: Number.isFinite(cb) ? cb : 0,
+            dailyTotals: lastDates.map(() => 0),
+            dailyUniques: lastDates.map(() => 0)
         };
     }
 
+    // Fill daily totals and uniques per zone
     for (let i = 0; i < lastDates.length; i++) {
         const d = lastDates[i];
         const group = rawData[d] || {};
         const uniqueSets = {};
         for (const z of zonesOfInterest) uniqueSets[z] = new Set();
-        
+
         for (const docKey in group) {
             const row = group[docKey];
             if (!row || !passZoneFilters(row)) continue;
-            const z = String(row.Zone || 'N/A');
-            const caller = getCallerId(row, docKey);
-            
-            if (perZone[z]) {
-                perZone[z].dailyTotals[i] += 1;
-                uniqueSets[z].add(caller);
+            const zoneVal = String(row.Zone || 'N/A');
+            if (!zonesOfInterest.includes(zoneVal)) continue;
+
+            perZone[zoneVal].dailyTotals[i]++;
+            uniqueSets[zoneVal].add(getCallerId(row, docKey));
+        }
+        for (const z of zonesOfInterest) {
+            perZone[z].dailyUniques[i] = uniqueSets[z].size;
+        }
+    }
+
+    // Grand Totals (sum of totals across all urban zones)
+    const grandTotals = lastDates.map((_, i) =>
+        zonesOfInterest.reduce((sum, z) => sum + (perZone[z]?.dailyTotals[i] || 0), 0)
+    );
+
+    // Grand Uniques (real unique across all urban zones - no summing!)
+    const grandUniques = lastDates.map((_, i) => {
+        const dailySet = new Set();
+        const d = lastDates[i];
+        const group = rawData[d] || {};
+        for (const docKey in group) {
+            const row = group[docKey];
+            if (!row || !passZoneFilters(row)) continue;
+            if (!zonesOfInterest.includes(String(row.Zone || 'N/A'))) continue;
+            dailySet.add(getCallerId(row, docKey));
+        }
+        return dailySet.size;
+    });
+
+    // MTD / PWA / CWA aggregates only for urban zones
+    const urbanOnlyFilter = (row) => {
+        if (!row) return false;
+        const zone = String(row.Zone || 'N/A');
+        return zonesOfInterest.includes(zone) && passZoneFilters(row);
+    };
+
+    const mtdAgg = computeTotalsForDateArray(mtdDates, urbanOnlyFilter);
+    const prevAgg = computeTotalsForDateArray(prevDates, urbanOnlyFilter);
+    const curAgg = computeTotalsForDateArray(lastDates, urbanOnlyFilter);
+
+    const grandMtdAvg = mtdAgg.days > 0 ? Math.round(mtdAgg.tot / mtdAgg.days) : 0;
+    const grandPrevAvg = prevAgg.days > 0 ? Math.round(prevAgg.tot / prevAgg.days) : 0;
+    const grandCurAvg = curAgg.days > 0 ? Math.round(curAgg.tot / curAgg.days) : 0;
+
+    const grandMtdUniqAvg = mtdAgg.days > 0 ? Math.round(mtdAgg.uniqueCount / mtdAgg.days) : 0;
+    const grandPrevUniqAvg = prevAgg.days > 0 ? Math.round(prevAgg.uniqueCount / prevAgg.days) : 0;
+    const grandCurUniqAvg = curAgg.days > 0 ? Math.round(curAgg.uniqueCount / curAgg.days) : 0;
+
+    const grandBase = zonesOfInterest.reduce((s, z) => s + (perZone[z]?.clientBase || 0), 0);
+
+    // Rebuild available reasons based on current zone filter
+    const currentReasons = new Set();
+    for (const date in rawData) {
+        const day = rawData[date];
+        for (const id in day) {
+            const row = day[id];
+            if (!row) continue;
+            const zone = String(row.Zone || 'N/A');
+            if (zoneFilters.size > 0 && !zoneFilters.has(zone)) continue;
+            if (zonesOfInterest.includes(zone)) {
+                currentReasons.add(String(row["Call Reason"] || 'N/A'));
             }
         }
-        for (const z of zonesOfInterest) perZone[z].dailyUniques[i] = uniqueSets[z].size;
     }
+    allAvailableZoneReasons = Array.from(currentReasons).sort();
 
     function buildZoneTableHtml() {
         const thDates = lastDates.map(d => {
@@ -725,55 +803,41 @@ function renderZoneSection() {
         });
 
         let html = `<div style="overflow:auto"><table class="excel-table"><thead><tr>
-            <th>Zone</th>
-            <th>Type</th>
-            <th>Client Base</th>
-            <th class="col-base-pct">% age of Base (MTD)</th>
-            <th>MTD Avg</th>
-            <th>${pwaText}</th>
-            <th>${cwaText}</th>`;
-
+            <th>Zone</th><th>Type</th><th>Client Base</th><th class="col-base-pct">% age of Base (MTD)</th>
+            <th>MTD Avg</th><th>${pwaText}</th><th>${cwaText}</th>`;
         for (const hd of thDates) html += `<th>${hd}</th>`;
         html += `</tr></thead><tbody>`;
 
         for (const z of zonesOfInterest) {
             if (!perZone[z]) continue;
             const clientBase = perZone[z].clientBase;
-            
-            const mtdAgg = computeZoneAggregates(z, mtdDates, passZoneFilters);
-            const prevAgg = computeZoneAggregates(z, prevDates, passZoneFilters);
-            const curAgg = computeZoneAggregates(z, lastDates, passZoneFilters);
 
+            // MTD Unique Avg per zone (for % of base)
             let mtdSumUniq = 0, mtdDays = 0;
             for (const dStr of mtdDates) {
                 const [yy, mm, dd] = dStr.split('-');
                 const dObj = new Date(yy, parseInt(mm) - 1, dd);
                 if (dObj >= today) continue;
-                const group = rawData[dStr] || {};
-                const uniqSet = new Set();
-                for (const docKey in group) {
-                    const row = group[docKey];
-                    if (!row || !passZoneFilters(row) || String(row.Zone || 'N/A') !== z) continue;
-                    uniqSet.add(getCallerId(row, docKey));
-                }
-                mtdSumUniq += uniqSet.size;
+                const count = computeDailyUniqueCount(dStr, row => {
+                    return String(row.Zone || 'N/A') === z && passZoneFilters(row);
+                });
+                mtdSumUniq += count;
                 mtdDays++;
             }
             const mtdAvgUniq = mtdDays > 0 ? (mtdSumUniq / mtdDays) : 0;
+            const percentOfBase = clientBase > 0 ? (mtdAvgUniq / clientBase * 100).toFixed(1) + '%' : '-';
 
-            let percentOfBase = '-';
-            if (clientBase > 0) {
-                const pct = (mtdAvgUniq / clientBase) * 100;
-                percentOfBase = Number.isFinite(pct) ? (pct.toFixed(1) + '%') : '-';
-            }
+            const zoneMtd = computeZoneAggregates(z, mtdDates, passZoneFilters);
+            const zonePrev = computeZoneAggregates(z, prevDates, passZoneFilters);
+            const zoneCur = computeZoneAggregates(z, lastDates, passZoneFilters);
 
-            const mtdAvg = Math.round(mtdAgg.tot / Math.max(1, mtdDates.length));
-            const prevAvg = prevDates.length > 0 ? Math.round(prevAgg.tot / prevDates.length) : 0;
-            const curAvg = lastDates.length > 0 ? Math.round(curAgg.tot / lastDates.length) : 0;
+            const mtdAvg = Math.round(zoneMtd.tot / Math.max(1, mtdDates.length));
+            const prevAvg = prevDates.length > 0 ? Math.round(zonePrev.tot / prevDates.length) : 0;
+            const curAvg = lastDates.length > 0 ? Math.round(zoneCur.tot / lastDates.length) : 0;
 
-            const mtdUniqAvg = Math.round(mtdAgg.uniq / Math.max(1, mtdDates.length));
-            const prevUniqAvg = prevDates.length > 0 ? Math.round(prevAgg.uniq / prevDates.length) : 0;
-            const curUniqAvg = lastDates.length > 0 ? Math.round(curAgg.uniq / lastDates.length) : 0;
+            const mtdUniqAvg = Math.round(zoneMtd.uniq / Math.max(1, mtdDates.length));
+            const prevUniqAvg = prevDates.length > 0 ? Math.round(zonePrev.uniq / prevDates.length) : 0;
+            const curUniqAvg = lastDates.length > 0 ? Math.round(zoneCur.uniq / lastDates.length) : 0;
 
             html += `<tr><td class="zone">${z}</td><td>Total</td><td>${clientBase}</td><td class="muted col-base-pct">${percentOfBase}</td><td>${mtdAvg}</td><td>${prevAvg}</td><td>${curAvg}</td>`;
             for (let i = 0; i < lastDates.length; i++) html += `<td>${perZone[z].dailyTotals[i]}</td>`;
@@ -783,34 +847,8 @@ function renderZoneSection() {
             for (let i = 0; i < lastDates.length; i++) html += `<td>${perZone[z].dailyUniques[i]}</td>`;
             html += `</tr>`;
         }
-        
-        const grandTotals = lastDates.map((_, i) => zonesOfInterest.reduce((s, z) => s + (perZone[z]?.dailyTotals[i] || 0), 0));
-        const grandUniques = lastDates.map((_, i) => {
-            // Correctly calculate grand unique totals across all zones for the day
-            const dailyUniqueSet = new Set();
-            const d = lastDates[i];
-            const group = rawData[d] || {};
-            for(const docKey in group){
-                const row = group[docKey];
-                if(!row || !passZoneFilters(row)) continue;
-                dailyUniqueSet.add(getCallerId(row, docKey));
-            }
-            return dailyUniqueSet.size;
-        });
-        const grandBase = zonesOfInterest.reduce((s, z) => s + (perZone[z]?.clientBase || 0), 0);
 
-        const grandZoneMtdAgg = computeTotalsForDateArray(mtdDates, passZoneFilters);
-        const grandZonePrevAgg = computeTotalsForDateArray(prevDates, passZoneFilters);
-        const grandZoneCurAgg = computeTotalsForDateArray(lastDates, passZoneFilters);
-
-        const grandMtdAvg = grandZoneMtdAgg.days > 0 ? Math.round(grandZoneMtdAgg.tot / grandZoneMtdAgg.days) : 0;
-        const grandPrevAvg = grandZonePrevAgg.days > 0 ? Math.round(grandZonePrevAgg.tot / grandZonePrevAgg.days) : 0;
-        const grandCurAvg = grandZoneCurAgg.days > 0 ? Math.round(grandZoneCurAgg.tot / grandZoneCurAgg.days) : 0;
-
-        const grandMtdUniqAvg = grandZoneMtdAgg.days > 0 ? Math.round(grandZoneMtdAgg.uniqueCount / grandZoneMtdAgg.days) : 0;
-        const grandPrevUniqAvg = grandZonePrevAgg.days > 0 ? Math.round(grandZonePrevAgg.uniqueCount / grandZonePrevAgg.days) : 0;
-        const grandCurUniqAvg = grandZoneCurAgg.days > 0 ? Math.round(grandZoneCurAgg.uniqueCount / grandZoneCurAgg.days) : 0;
-        
+        // GRAND TOTALS 
         html += `<tr class="grand"><td>Grand Total</td><td>Total</td><td>${grandBase}</td><td class="col-base-pct">-</td><td>${grandMtdAvg}</td><td>${grandPrevAvg}</td><td>${grandCurAvg}</td>`;
         for (let i = 0; i < lastDates.length; i++) html += `<td>${grandTotals[i]}</td>`;
         html += `</tr>`;
@@ -819,54 +857,51 @@ function renderZoneSection() {
         for (let i = 0; i < lastDates.length; i++) html += `<td>${grandUniques[i]}</td>`;
         html += `</tr>`;
 
-        const zoneRepeatRatios = grandTotals.map((t,i) => { const u = grandUniques[i] || 0; return u > 0 ? (t / u).toFixed(2) : '-'; });
-        const zoneRepeatPct = grandTotals.map((t,i) => { const u = grandUniques[i] || 0; return t > 0 ? Math.round((1 - (u / t)) * 100) + '%' : '-'; });
+        // Repeat ratios
+        const ratios = grandTotals.map((t, i) => {
+            const u = grandUniques[i] || 0;
+            return u > 0 ? (t / u).toFixed(2) : '-';
+        });
+        const pct = grandTotals.map((t, i) => {
+            const u = grandUniques[i] || 0;
+            return t > 0 ? Math.round((1 - u / t) * 100) + '%' : '-';
+        });
 
         html += `<tr class="repeat"><td colspan="7" class="zone">Repeat Call Ratio</td>`;
-        for (let i = 0; i < zoneRepeatRatios.length; i++) html += `<td>${zoneRepeatRatios[i]}</td>`;
+        for (const r of ratios) html += `<td>${r}</td>`;
         html += `</tr>`;
 
         html += `<tr class="repeat"><td colspan="7" class="zone">Repeat Call %</td>`;
-        for (let i = 0; i < zoneRepeatPct.length; i++) html += `<td>${zoneRepeatPct[i]}</td>`;
-        html += `</tr>`;
+        for (const p of pct) html += `<td>${p}</td>`;
+        html += `</tr></tbody></table></div>`;
 
-
-        html += `</tbody></table></div>`;
         return html;
     }
 
     if (zoneSummaryTableContainer) zoneSummaryTableContainer.innerHTML = buildZoneTableHtml();
 
+    // Chart - now shows correct urban-only data
     const chartLabels = lastDates.map(d => {
         const [y, m, day] = d.split('-');
         return new Date(y, parseInt(m) - 1, day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
     });
-    const chartTotals = lastDates.map((_, i) => zonesOfInterest.reduce((s, z) => s + (perZone[z]?.dailyTotals[i] || 0), 0));
-    const chartUniques = lastDates.map((_, i) => {
-        const dailyUniqueSet = new Set();
-        const d = lastDates[i];
-        const group = rawData[d] || {};
-        for(const docKey in group){
-            const row = group[docKey];
-            if(!row || !passZoneFilters(row)) continue;
-            dailyUniqueSet.add(getCallerId(row, docKey));
-        }
-        return dailyUniqueSet.size;
-    });
-    createOrUpdateZoneChart(chartLabels, chartTotals, chartUniques);
 
+    createOrUpdateZoneChart(chartLabels, grandTotals, grandUniques);
+
+    // Rebuild zone & reason chips
     if (zoneChips && zoneChips.children.length !== zonesOfInterest.length) {
         zoneChips.innerHTML = "";
         for (const z of zonesOfInterest) {
             const chip = document.createElement("div");
-            chip.className = "chip off";
+            chip.className = zoneFilters.has(z) ? "chip selected" : "chip off";
             chip.dataset.value = z;
             chip.textContent = z;
             chip.onclick = () => { zoneFilters.clear(); zoneFilters.add(z); renderZoneSection(); };
             zoneChips.appendChild(chip);
         }
     }
-    if (zoneReasonChips && zoneReasonChips.children.length !== allAvailableZoneReasons.length) {
+
+    if (zoneReasonChips) {
         zoneReasonChips.innerHTML = '';
         for (const reason of allAvailableZoneReasons) {
             const chip = document.createElement('div');
@@ -881,7 +916,7 @@ function renderZoneSection() {
             zoneReasonChips.appendChild(chip);
         }
     }
-    
+
     updateChipVisuals();
 }
 
@@ -1256,6 +1291,8 @@ function start() {
             console.error("CSV Loading Error:", err);
         });
 }
+
+document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
 
 start();
 
