@@ -1,45 +1,40 @@
-# .github/workflows/merge-calls.yml
 name: Merge CSV to JSON
 
 on:
   push:
     paths:
-      - 'data/calls/CSV/*.csv'
+      - "data/calls/CSV/*.csv"
   workflow_dispatch:
 
 jobs:
-  merge-calls:
+  build-json:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
-      - name: Install pandas
-        run: pip install pandas
-
-      # THIS IS THE FIX — we are already in the inner dashboard-data folder!
-      - name: Run merge script
-        run: python data/calls/merge_csv_to_json.py
-        # Removed the leading "dashboard-data/" ← this was the bug!
-
-      - name: Commit & push if changed
+      - name: Install dependencies
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pip install pandas
+
+      - name: Run merge script
+        run: |
+          python data/calls/merge_csv_to_json.py
+
+      - name: Commit results
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git add data/calls/all_calls.json
-          
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Auto-update all_calls.json [skip ci]"
-            git push
-          fi
+          git commit -m "Auto-merged CSV → all_calls.json" || echo "No changes to commit"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
