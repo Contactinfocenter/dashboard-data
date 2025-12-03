@@ -166,7 +166,8 @@ td.zone {
 canvas {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    background: white;
+    background: transparent; /* or rgba(0, 0, 0, 0) */
+
 }
 
 /* Small nice touches */
@@ -236,7 +237,7 @@ canvas {
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="col-span-3 space-y-6">
-                <div id="summaryTableContainer" class="bg-white/70 p-6 rounded-xl shadow">
+                <div id="summaryTableContainer">
                     <p class="text-center text-gray-600">Loading summary data...</p>
                 </div>
 
@@ -286,7 +287,7 @@ canvas {
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div class="col-span-3 space-y-6">
-          <div id="zoneSummaryTableContainer" class="bg-white/70 p-6 rounded-xl shadow">
+          <div id="zoneSummaryTableContainer">
             <p class="text-center text-gray-600">Loading zone summary data...</p>
           </div>
 
@@ -331,7 +332,7 @@ canvas {
 
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div class="col-span-3 space-y-6">
-          <div id="ruralSummaryTableContainer" class="bg-white/70 p-6 rounded-xl shadow">
+          <div id="ruralSummaryTableContainer">
             <p class="text-center text-gray-600">Loading rural summary data...</p>
           </div>
 

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Call Analytics</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --card: rgba(255,255,255,0.85);
+      --border: rgba(255,255,255,0.6);
+      --header: #1e293b;
+      --primary: #4f46e5;
+      --grand: #dbeafe;
+      --repeat: #fee2e2;
+    }
+    body.dark {
+      --bg: #0f172a;
+      --text: #e2e8f0;
+      --card: rgba(15,23,42,0.65);
+      --border: rgba(255,255,255,0.1);
+      --header: #1e293b;
+      --grand: #1e40af;
+      --repeat: #7f1d1d;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      color: var(--text);
+      transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    body.dark { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+
+    h1 { font-size: 1.8rem; font-weight: 800; color: var(--header); margin-bottom: 1rem; }
+
+    /* Glass Cards */
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(16px);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      transition: all 0.4s ease;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.18); }
+
+    /* Header Bar */
+    .header-bar {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      margin-bottom: 1.5rem; padding: 1rem 1.5rem; background: var(--card); border-radius: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* Chips */
+    .chip {
+      padding: 5px 11px; font-size: 0.79rem; font-weight: 500; border-radius: 8px;
+      background: #eef2ff; color: #4338ca; border: 1px solid rgba(79,70,229,0.2);
+      transition: all 0.25s ease; cursor: pointer; height: 28px; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+    .chip.off { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; }
+    .chip.selected { background: var(--primary); color: white; box-shadow: 0 4px 16px rgba(79,70,229,0.4); transform: scale(1.05); }
+    .chip:hover:not(.selected) { background: #e0e7ff; transform: translateY(-2px); }
+
+    /* Reason chips – tiny! */
+    #reasonChips .chip,
+    #zoneReasonChips .chip,
+    #ruralZoneReasonChips .chip {
+      height: 26px !important; font-size: 0.76rem !important; padding: 4px 9px !important;
+    }
+
+    /* Table */
+    .excel-table {
+      width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.89rem;
+      border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .excel-table thead th {
+      background: var(--header); color: white; padding: 12px 8px; font-weight: 600; text-align: center;
+    }
+    .excel-table td { padding: 9px 8px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; }
+    .excel-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .excel-table tbody tr:hover { background: #e0e7ff; }
+    .excel-table tr.grand { background: var(--grand) !important; font-weight: 700; color: #1e40af; }
+    .excel-table tr.repeat { background: var(--repeat) !important; font-weight: 600; color: #991b1b; }
+    body.dark .excel-table tr.grand { background: #1e40af !important; color: white !important; }
+    body.dark .excel-table tr.repeat { background: #7f1d1d !important; color: #fca5a5 !important; }
+
+    td.zone { text-align: left !important; font-weight: 700; color: #1e40af; }
+
+    /* Buttons */
+    .filter-btn {
+      background: var(--header); color: white; border: none; padding: 10px 20px;
+      border-radius: 999px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 4px 16px rgba(30,41,59,0.3);
+    }
+    .filter-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(30,41,59,0.4); }
+
+    /* Floating Elements */
+    #themeToggle, #lastUpdated {
+      position: fixed; z-index: 9999; border-radius: 50px; font-weight: 600;
+      padding: 10px 18px; box-shadow: 0 8px 25px rgba(0,0,0,0.25); transition: all 0.4s;
+    }
+    #themeToggle { top: 20px; right: 20px; background: #1e293b; color: white; border: none; cursor: pointer; }
+    #lastUpdated { top: 20px; right: 140px; background: #10b981; color: white; font-size: 0.82rem; }
+
+    canvas { border-radius: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.12); background: white; }
+  </style>
+</head>
+<body>
+
+  <button id="themeToggle">Dark Mode</button>
+  <div id="lastUpdated">Last updated: loading...</div>
+
+  <div class="header-bar">
+    <h1>Call Analytics Dashboard</h1>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div id="regionChips"></div>
+      <button class="filter-btn" id="clearFiltersBtn">Clear Filters</button>
+      <input type="text" class="filter-input" id="mainDateRange" placeholder="Select Date Range" />
+      <button class="filter-btn">Clear</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="overflow:auto;">
+      <div id="summaryTableContainer"></div>
+    </div>
+    <canvas id="barChart" height="120"></canvas>
+  </div>
+
+  <!-- Keep your existing Zone & Rural sections below – they will inherit all the beauty automatically -->
+
+  <script>
+    // Your full working JS from before goes here (no changes needed!)
+    // Just add these two lines at the very end of your init() or after loading data:
+
+    document.getElementById('lastUpdated').textContent = 
+      "Last updated: " + new Date().toLocaleString('en-GB', {day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      document.getElementById('themeToggle').textContent = isDark ? "Light Mode" : "Dark Mode";
+    });
+
+    // Optional: Auto title update
+    function updateTitle() {
+      const range = dateFilters.main.start && dateFilters.main.end
+        ? `${dateFilters.main.start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${dateFilters.main.end.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`
+        : "Last 7 Days";
+      document.title = `Call Analytics • ${range}`;
+    }
+    // Call updateTitle() at the end of render(), renderZoneSection(), renderRuralZoneSection()
+  </script>
+
+  <!-- Paste your full working JavaScript below this line -->
+  <script src="app-git-firebase-converted.js"></script>
+</body>
+</html>
