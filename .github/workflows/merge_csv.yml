@@ -3,8 +3,8 @@ name: Merge CSV to JSON
 on:
   push:
     paths:
-      - 'data/calls/CSV/*.csv'
-      - 'data/calls/merge_csv_to_json.py'
+      - 'dashboard-data/data/calls/CSV/*.csv'          # Your real CSV folder
+      - 'dashboard-data/data/calls/merge_csv_to_json.py'  # Your script location
   workflow_dispatch:
 
 jobs:
@@ -13,26 +13,32 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # important for git push
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          pip install pandas
+      - name: Install pandas
+        run: pip install pandas
 
-      - name: Run CSV merge script
-        working-directory: ./data/calls
-        run: |
-          python3 merge_csv_to_json.py
+      - name: Run CSV → JSON merge script
+        run: python3 dashboard-data/data/calls/merge_csv_to_json.py
+        # runs from repo root → script auto-detects paths → no more errors
 
-      - name: Commit and Push Changes
+      - name: Commit & push updated all_calls.json (only if changed)
         run: |
-          git config --local user.name "GitHub Action"
-          git config --local user.email "action@github.com"
-          git add all_calls.json
-          git commit -m "Auto-update all_calls.json from new CSV upload" || echo "No changes to commit"
-          git push
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          
+          git add dashboard-data/data/calls/all_calls.json
+          
+          if git diff --staged --quiet; then
+            echo "No changes in all_calls.json → nothing to commit"
+          else
+            git commit -m "Auto-update all_calls.json from new CSV upload"
+            git push
+          fi
