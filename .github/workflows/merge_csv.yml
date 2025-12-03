@@ -1,40 +1,34 @@
 # .github/workflows/merge-calls.yml
 name: Merge CSV to JSON
-
 on:
   push:
     paths:
       - 'dashboard-data/data/calls/CSV/*.csv'
   workflow_dispatch:
-
 jobs:
   merge-calls:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          # Important: fetch all history so git diff works properly
           fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install pandas
         run: pip install pandas
-
       - name: Run merge script
         run: python dashboard-data/data/calls/merge_csv_to_json.py
-        # This is now correct because the script is at that exact path from repo root
-
-      - name: Commit & push changes
+      - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dashboard-data/data/calls/all_calls.json
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes to all_calls.json"
           else
             git commit -m "Auto-update all_calls.json [skip ci]"
             git push
