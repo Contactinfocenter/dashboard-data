@@ -8,23 +8,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  run:
+  merge-calls:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Important: fetch all history so git diff works properly
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - run: pip install pandas
+      - name: Install pandas
+        run: pip install pandas
 
       - name: Run merge script
         run: python dashboard-data/data/calls/merge_csv_to_json.py
+        # This is now correct because the script is at that exact path from repo root
 
-      - name: Commit & push if changed
+      - name: Commit & push changes
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dashboard-data/data/calls/all_calls.json
-          git diff --staged --quiet || (git commit -m "Auto-update all_calls.json" && git push)
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-update all_calls.json [skip ci]"
+            git push
+          fi
