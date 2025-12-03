@@ -12,7 +12,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -23,15 +23,15 @@ jobs:
       - name: Install pandas
         run: pip install pandas
 
-      - name: Run merge script
+      - name: Run merge script (correct path for nested repo)
         run: python dashboard-data/data/calls/merge_csv_to_json.py
-        # Note: no 3 at the end — GitHub runners use python = python3
+        # ↑↑↑ This is correct — two dashboard-data is normal and required
 
-      - name: Commit & push updated JSON
+      - name: Commit & push if JSON changed
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add dashboard-data/data/calls/all_calls.json
-          git diff --staged --quiet && echo "No changes" || (
+          git diff --staged --quiet || (
             git commit -m "Auto-update all_calls.json" && git push
           )
