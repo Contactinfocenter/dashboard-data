@@ -4,7 +4,7 @@ name: Merge CSV to JSON
 on:
   push:
     paths:
-      - 'dashboard-data/data/calls/CSV/*.csv'
+      - 'data/calls/CSV/*.csv'
   workflow_dispatch:
 
 jobs:
