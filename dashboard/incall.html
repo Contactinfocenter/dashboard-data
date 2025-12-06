@@ -42,130 +42,139 @@
           <button id="btnReload" 
                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium 
                          rounded-lg shadow-md transition">
-            Latest
+            Reset
           </button>
         </div>
       </div>
 
       <!-- KPI ROW -->
+       
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
-          <div class="text-gray-600 text-sm">Total Calls</div>
-          <div class="text-2xl font-bold" id="kpiTotalCalls">0</div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
+          <div class="text-gray-600 text-sm font-medium">Total Calls</div>
+          <div class="text-3xl font-bold text-gray-900 mt-1" id="kpiTotalCalls">0</div>
         </div>
-        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
-          <div class="text-gray-600 text-sm">Unique Callers</div>
-          <div class="text-2xl font-bold" id="kpiUniqueCallers">0</div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
+          <div class="text-gray-600 text-sm font-medium">Unique Callers</div>
+          <div class="text-3xl font-bold text-gray-900 mt-1" id="kpiUniqueCallers">0</div>
         </div>
-        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
-          <div class="text-gray-600 text-sm">FCR Rate</div>
-          <div class="text-2xl font-bold" id="kpiFCRPercent">0%</div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
+          <div class="text-gray-600 text-sm font-medium">FCR Rate</div>
+          <div class="text-3xl font-bold text-emerald-600 mt-1" id="kpiFCRPercent">0%</div>
         </div>
-        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
-          <div class="text-gray-600 text-sm">Active Agents</div>
-          <div class="text-2xl font-bold" id="kpiActiveAgents">0</div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
+          <div class="text-gray-600 text-sm font-medium">Active Agents</div>
+          <div class="text-3xl font-bold text-gray-900 mt-1" id="kpiActiveAgents">0</div>
         </div>
-        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow">
-          <div class="text-gray-600 text-sm">Avg Handle Time</div>
-          <div class="text-2xl font-bold" id="kpiAvgHandleTime">0s</div>
+        <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
+          <div class="text-gray-600 text-sm font-medium">Avg Handle Time</div>
+          <div class="text-3xl font-bold text-orange-600 mt-1" id="kpiAvgHandleTime">0s</div>
         </div>
       </div>
 
       <!-- CHART GRID -->
+       
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Average Hourly (All Time) -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Average Hourly Call Volume (All Time)</h3>
+          <h3 class="font-semibold mb-3">Average Hourly Volume (All Dates)</h3>
           <div class="chart-container h-72"><canvas id="avgHourlyChart"></canvas></div>
         </div>
+
+        <!-- Selected Date Hourly -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Hourly Call Volume (Selected Date)</h3>
+          <h3 class="font-semibold mb-3">Hourly Volume – <span id="selectedDateTitle">Selected Date</span></h3>
           <div class="chart-container h-72"><canvas id="lastDayHourlyChart"></canvas></div>
         </div>
 
+        <!-- Region Pies -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Total Calls by Region (Month Total)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Monthly Total)</h3>
           <div class="chart-container h-72"><canvas id="monthRegionPie"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Calls by Region (Selected Date)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Selected Date)</h3>
           <div class="chart-container h-72"><canvas id="lastDayRegionPie"></canvas></div>
         </div>
 
+        <!-- FCR Pies -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">FCR vs Non-FCR (Month Total)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">FCR vs Non-FCR (Monthly)</h3>
           <div class="chart-container h-72"><canvas id="monthFCRPie"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">FCR vs Non-FCR (Selected Date)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">FCR vs Non-FCR (Selected Date)</h3>
           <div class="chart-container h-72"><canvas id="lastDayFCRPie"></canvas></div>
         </div>
 
+        <!-- Butterfly Charts -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Top 10 Reasons: Avg Volume vs ACHT (Monthly)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs Avg ACHT (Monthly)</h3>
           <div class="chart-container h-96"><canvas id="monthButterflyChart1"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Selected Date Volume vs Avg ACHT</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs ACHT (Selected Date)</h3>
           <div class="chart-container h-96"><canvas id="dayButterflyChart"></canvas></div>
         </div>
 
+        <!-- Billing Butterfly -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Billing Issue: Avg Volume vs ACHT (Monthly)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Monthly)</h3>
           <div class="chart-container h-96"><canvas id="monthBillingButterfly"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Billing: Selected Date Volume vs Avg ACHT</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Selected Date)</h3>
           <div class="chart-container h-96"><canvas id="dayBillingButterfly"></canvas></div>
         </div>
 
+        <!-- Radar Charts -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Call Reason Trend (Last 30 Days)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Call Reason Distribution (Monthly Volume)</h3>
           <div class="chart-container h-96"><canvas id="reasonRadarmonthly"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Billing: Selected Date Volume vs Avg ACHT</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Call Reason Distribution (Selected Date)</h3>
           <div class="chart-container h-96"><canvas id="reasonRadardaily"></canvas></div>
         </div>
 
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Call Reason Trend (Last 30 Days)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons Distribution (Monthly)</h3>
           <div class="chart-container h-96"><canvas id="billingReasonRadarmonthly"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Billing: Selected Date Volume vs Avg ACHT</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons Distribution (Selected Date)</h3>
           <div class="chart-container h-96"><canvas id="billingReasonRadardaily"></canvas></div>
         </div>
-        
+
+        <!-- Trend Charts -->
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Call Reason Trend (Last 30 Days)</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">Month-over-Month: Daily Volume & Avg AHT</h3>
           <div class="chart-container h-96"><canvas id="monthOverMonthChart"></canvas></div>
         </div>
         <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-          <h3 class="font-semibold mb-3">Billing: Selected Date Volume vs Avg ACHT</h3>
+          <h3 class="text-lg font-bold text-gray-800 mb-4">FCR % Trend Over Time</h3>
           <div class="chart-container h-96"><canvas id="fcrTrendChart"></canvas></div>
-        </div>          
-<!-- Spiking Reasons – Professional Card Style -->
-<div style="background:#fff; border-radius:16px; padding:20px; margin:24px 0; box-shadow:0 8px 25px rgba(0,0,0,0.08); border:1px solid #e2e8f0;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <h3 style="margin:0; font-size:18px; font-weight:700; color:#1e293b;">
-      Spiking Today vs 7-day average
-    </h3>
-    <span style="font-size:13px; color:#64748b;">Significant changes only</span>
-  </div>
-  <div id="spikesContainer" style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center; min-height:60px; align-items:center;">
-    <!-- Items will be injected here -->
-  </div>
-</div>
-
-        <!-- Worst Hour Badge -->
-<div style="text-align:center; margin:20px 0;">
-  <div id="worstHourBadge" style="display:inline-block; background:#1e293b; color:white; padding:14px 28px; border-radius:16px; font-weight:700; font-size:17px; box-shadow:0 8px 20px rgba(0,0,0,0.12);">
-    Calculating worst hour…
-  </div>
-</div>
-
+        </div>
       </div>
 
+      <!-- Spiking Reasons Alert -->
+      <div class="bg-white/60 backdrop-blur-lg border border-white/50 rounded-2xl p-6 shadow-xl mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-800">Spiking Reasons Today vs 7-Day Average</h3>
+          <span class="text-sm text-gray-500">Only significant changes shown</span>
+        </div>
+        <div id="spikesContainer" class="flex flex-wrap gap-4 justify-center min-h-20 items-center">
+          <div class="text-gray-500 italic">Loading spikes...</div>
+        </div>
+      </div>
+
+      <!-- Worst Hour Badge -->
+      <div class="text-center mb-10">
+        <div id="worstHourBadge" class="inline-block bg-gradient-to-r from-gray-800 to-gray-900 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl">
+          Calculating peak hour...
+        </div>
+      </div>
     </main>
   </div>
 
@@ -177,12 +186,9 @@
   
 
   <!-- Custom Scripts -->
-  <script src="script.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-<script type="module" src="app-git-combo.js"></script>
-<!-- 
-<script type="module" src="git.js"></script>
--->
+  <script type="module" src="incall.js"></script>
+
 </body>
 </html>

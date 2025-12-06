@@ -8,7 +8,6 @@ if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
 }
 
-
 // ---------------------------
 // Config & Globals
 // ---------------------------
@@ -79,42 +78,79 @@ function createMixed(id, labels=[], datasets=[]){
   });
 }
 
-function createPie(id, labels=[], dataArr=[], colors=[], isFCR=false, isRegion=false){
-  destroyIfExists(id);
-  const ctx = document.getElementById(id);
-  if(!ctx) return;
-  let backgroundColors;
-  if(isFCR) backgroundColors = FCR_COLORS;
-  else if(isRegion) backgroundColors = labels.map(l => REGION_COLORS[l] || REGION_COLORS['N/A']);
-  else backgroundColors = colors;
+function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, isRegion = false) {
+    destroyIfExists(id);
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
 
-  charts[id] = new Chart(ctx, {
-    type:'doughnut',
-    data:{ labels, datasets:[{ data:dataArr, backgroundColor:backgroundColors, borderWidth:4, borderColor:'#fff', cutout:'70%' }] },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        legend:{ display:false },
-        datalabels:{
-          color:'#0f1724',
-          font:{ weight:'bold', size:12 },
-          align:'end',
-          anchor:'end',
-          offset:12,
-          formatter:(value, ctx) => {
-            if(!value || value === 0) return '';
-            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-            const perc = total>0?Math.round((value/total)*100):0;
-            const label = ctx.chart.data.labels[ctx.dataIndex];
-            if(isFCR) return `${perc}%\n${label}`;
-            if(isRegion) return `${value.toLocaleString()}\n${label}`;
-            return perc > 1 ? `${value.toLocaleString()}\n${label}` : '';
-          }
-        }
-      }
-    }
-  });
+    let finalLabels = labels;
+    let finalData = dataArr;
+    let backgroundColors = colors;
+
+    if (isRegion) {
+        const allRegions = ['Rural', 'Urban', 'N/A'];
+        finalLabels = allRegions;
+        finalData = allRegions.map(r => {
+            const idx = labels.indexOf(r);
+            return idx !== -1 ? dataArr[idx] : 0;
+        });
+        backgroundColors = allRegions.map(r => REGION_COLORS[r]);
+    } else if (isFCR) {
+        backgroundColors = FCR_COLORS;
+    }
+
+    charts[id] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: finalLabels,
+            datasets: [{
+                data: finalData,
+                backgroundColor: backgroundColors,
+                borderColor: '#ffffff',
+                borderWidth: 4,
+                cutout: '68%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 13, weight: '600' },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#1e293b'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const v = ctx.parsed;
+                            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                            const perc = total > 0 ? Math.round((v/total)*100) : 0;
+                            return `${ctx.label}: ${v.toLocaleString()} (${perc}%)`;
+                        }
+                    }
+                },
+                datalabels: {
+                    color: '#ffffff',
+                    font: { weight: 'bold', size: 14 },
+                    textStrokeColor: '#000',
+                    textStrokeWidth: 3,
+                    textShadowBlur: 6,
+                    textShadowColor: 'rgba(0,0,0,0.7)',
+                    formatter: (value) => {
+                        if (value === 0) return '';
+                        return value >= 100 ? value.toLocaleString() : value;
+                    }
+                }
+            }
+        }
+    });
 }
 
 function createButterflyChart(id, labels=[], leftData=[], rightData=[], leftLabel='Avg ACHT', rightLabel='Volume', title='Top 10 Reasons', achtColor=GENERAL_ACHT_COLOR, volumeColor=GENERAL_VOLUME_COLOR){
@@ -275,6 +311,8 @@ function processData(grouped) {
   if(!selectedDate || !groupedData[selectedDate]) selectLatestDate();
   renderAveragesAndMonthPies();
   renderForSelectedDate();
+  createMonthOverMonthChart();
+  createFCRTrendChart();
 }
 
 function selectLatestDate(){
@@ -501,6 +539,198 @@ function renderForSelectedDate(){
 }
 
 // ---------------------------
+// NEW CHART 1: Month-over-Month Volume + Avg AHT
+// ---------------------------
+function createMonthOverMonthChart() {
+    destroyIfExists("monthOverMonthChart");
+
+    // Group by YYYY-MM
+    const monthlyStats = {};
+
+    for (const dateKey in groupedData) {
+        const [y, m] = dateKey.split('-');
+        const monthKey = `${y}-${m}`;
+        if (!monthlyStats[monthKey]) {
+            monthlyStats[monthKey] = {
+                calls: 0,
+                achtSum: 0,
+                fcr: 0,
+                totalResolved: 0,
+                days: 0
+            };
+        }
+        const day = groupedData[dateKey];
+        const dayCalls = Object.keys(day).length;
+        let dayAchtSum = 0;
+        let dayFcr = 0;
+
+        for (const id in day) {
+            const c = day[id];
+            const duration = Number(c.acht) || 0;
+            dayAchtSum += duration;
+            if ((c.status || "").toUpperCase() === "FCR") dayFcr++;
+        }
+
+        monthlyStats[monthKey].calls += dayCalls;
+        monthlyStats[monthKey].achtSum += dayAchtSum;
+        monthlyStats[monthKey].fcr += dayFcr;
+        monthlyStats[monthKey].totalResolved += dayCalls;
+        monthlyStats[monthKey].days += 1;
+    }
+
+    // Sort months chronologically
+    const sortedMonths = Object.keys(monthlyStats).sort();
+    const labels = sortedMonths.map(m => {
+        const [y, mNum] = m.split('-');
+        return new Date(y, mNum - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
+
+    const volumeData = sortedMonths.map(m => Math.round(monthlyStats[m].calls / monthlyStats[m].days));
+    const ahtData = sortedMonths.map(m => {
+        const avg = monthlyStats[m].calls > 0 ? monthlyStats[m].achtSum / monthlyStats[m].calls : 0;
+        return Math.round(avg);
+    });
+
+    charts["monthOverMonthChart"] = new Chart(document.getElementById("monthOverMonthChart"), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Avg Daily Calls',
+                    data: volumeData,
+                    backgroundColor: 'rgba(74, 144, 226, 0.7)',
+                    borderRadius: 6,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'Avg AHT (seconds)',
+                    data: ahtData,
+                    borderColor: '#ff6b6b',
+                    backgroundColor: '#ff6b6b',
+                    borderWidth: 4,
+                    pointBackgroundColor: 'rgba(255,107,107,0.1)',
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                title: { display: true, text: 'Month-over-Month: Volume vs Average Handle Time', font: { size: 16 } },
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: ctx => {
+                            if (ctx.dataset.label.includes('AHT')) {
+                                const secs = ctx.parsed.y;
+                                return `     ${Math.floor(secs/60)}m ${secs%60}s`;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Avg Daily Calls' },
+                    grid: { drawOnChartArea: false }
+                },
+                y1: {
+                    position: 'right',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Avg AHT (seconds)', color: '#ff6b6b' },
+                    ticks: { color: '#ff6b6b' },
+                    grid: { drawOnChartArea: false }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+    renderSpikingReasons();
+  renderWorstHourBadge();
+}
+
+// ---------------------------
+// NEW CHART 2: Month-over-Month FCR% Trend
+// ---------------------------
+function createFCRTrendChart() {
+    destroyIfExists("fcrTrendChart");
+
+    // Reuse the same monthlyStats from above (or recalculate – we do it again safely)
+    const monthlyFCR = {};
+
+    for (const dateKey in groupedData) {
+        const [y, m] = dateKey.split('-');
+        const monthKey = `${y}-${m}`;
+        if (!monthlyFCR[monthKey]) monthlyFCR[monthKey] = { fcr: 0, total: 0 };
+
+        const day = groupedData[dateKey];
+        for (const id in day) {
+            const c = day[id];
+            if ((c.status || "").toUpperCase() === "FCR") monthlyFCR[monthKey].fcr++;
+            monthlyFCR[monthKey].total++;
+        }
+    }
+
+    const sorted = Object.keys(monthlyFCR).sort();
+    const labels = sorted.map(m => {
+        const [y, mNum] = m.split('-');
+        return new Date(y, mNum - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
+
+    const fcrPercent = sorted.map(m => {
+        const data = monthlyFCR[m];
+        return data.total > 0 ? Math.round((data.fcr / data.total) * 100) : 0;
+    });
+
+    charts["fcrTrendChart"] = new Chart(document.getElementById("fcrTrendChart"), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'FCR %',
+                data: fcrPercent,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                borderWidth: 5,
+                pointBackgroundColor: '#10b981',
+                pointRadius: 7,
+                pointHoverRadius: 10,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'First Call Resolution (FCR%) Trend', font: { size: 16 } },
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `FCR: ${ctx.parsed.y}%` } }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: v => v + '%' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+// ---------------------------
 // Fetch JSON, flatten, normalize & process
 // ---------------------------
 async function fetchAndRefresh(){
@@ -534,6 +764,104 @@ async function fetchAndRefresh(){
 
 // alias for UI button
 function fetchDataAndProcess(){ return fetchAndRefresh(); }
+
+// ──────────────────────────────────────────────────
+// 2. Top 5 Spiking Reasons Today vs 7-day average
+// ──────────────────────────────────────────────────
+function renderSpikingReasons() {
+  if (!selectedDate || !groupedData[selectedDate]) {
+    document.getElementById('spikesContainer').innerHTML = '<div style="color:#94a3b8; font-style:italic;">No data available</div>';
+    return;
+  }
+
+  const today = selectedDate;
+  const recentDates = availableDates.filter(d => d < today).slice(-7);
+
+  const todayCount = {};
+  const historyCount = {};
+
+  Object.values(groupedData[today] || {}).forEach(c => {
+    const r = c["Call Reason"] || "Unknown";
+    todayCount[r] = (todayCount[r] || 0) + 1;
+  });
+
+  recentDates.forEach(date => {
+    Object.values(groupedData[date] || {}).forEach(c => {
+      const r = c["Call Reason"] || "Unknown";
+      historyCount[r] = (historyCount[r] || 0) + 1;
+    });
+  });
+
+  const spikes = [];
+  const avgDays = recentDates.length || 1;
+
+  for (const reason of new Set([...Object.keys(todayCount), ...Object.keys(historyCount)])) {
+    const today = todayCount[reason] || 0;
+    const avg7 = (historyCount[reason] || 0) / avgDays;
+    const diff = today - avg7;
+    const pct = avg7 > 0 ? (today / avg7 - 1) * 100 : (today > 0 ? 1000 : 0);
+
+    // Only show meaningful changes
+    if (Math.abs(diff) >= 8 || Math.abs(pct) >= 40) {
+      spikes.push({ reason, today, avg7: Math.round(avg7), diff: Math.round(diff), pct: Math.round(pct) });
+    }
+  }
+
+  spikes.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+  const container = document.getElementById('spikesContainer');
+  if (spikes.length === 0) {
+    container.innerHTML = `<div style="color:#16a34a; font-weight:600; font-size:15px;">No significant spikes – smooth day!</div>`;
+    return;
+  }
+
+  container.innerHTML = spikes.slice(0, 8).map(s => {
+    const isUp = s.diff > 0;
+    const color = isUp ? '#dc2626' : '#16a34a';
+    const arrow = isUp ? '↑' : '↓';
+    const pctText = s.pct > 999 ? 'new' : (s.pct >= 0 ? '+' + s.pct : s.pct) + '%';
+
+    return `
+      <div style="background:${isUp ? '#fee2e2' : '#dcfce7'}; color:${color}; 
+                  padding:10px 16px; border-radius:12px; font-weight:600; 
+                  font-size:14px; min-width:180px; text-align:center;
+                  border: 1px solid ${isUp ? '#fecaca' : '#bbf7d0'}; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <div style="font-size:13px; opacity:0.9; margin-bottom:4px;">${s.reason}</div>
+        <div style="font-size:18px;">${s.today.toLocaleString()} <span style="font-size:14px;">(${pctText}) ${arrow}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────
+// 3. Worst Hour of the Day Badge (by call volume)
+// ──────────────────────────────────────────────────
+function renderWorstHourBadge() {
+  if (!selectedDate || !groupedData[selectedDate]) return;
+
+  const hourly = Array(24).fill(0);
+  Object.values(groupedData[selectedDate]).forEach(c => {
+    const h = parseInt(getHourFromDate(c.call_date));
+    hourly[h]++;
+  });
+
+  let max = 0, worst = 0;
+  for (let h = 0; h < 24; h++) {
+    if (hourly[h] > max) {
+      max = hourly[h];
+      worst = h;
+    }
+  }
+
+  const start = String(worst).padStart(2, '0');
+  const end = String(worst + 1).padStart(2, '0');
+  const badge = document.getElementById('worstHourBadge');
+
+  badge.textContent = `Worst hour: ${start}:00 – ${end}:00 (${max.toLocaleString()} calls)`;
+  badge.style.background = max > 800 ? '#fecaca' : max > 500 ? '#fed7aa' : '#d4d4d8';
+  badge.style.color = max > 800 ? '#7f1d1d' : '#451a03';
+  
+}
 
 // initial load
 fetchAndRefresh();
