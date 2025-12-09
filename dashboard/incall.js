@@ -7,6 +7,13 @@ if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
 }
 
+function createGradient(ctx, color) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+    gradient.addColorStop(0, color + "55");   // 33% opacity
+    gradient.addColorStop(1, color + "00");   // transparent
+    return gradient;
+}
+
 // ---------------------------
 // Config & Globals
 // ---------------------------
