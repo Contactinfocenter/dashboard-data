@@ -17,7 +17,6 @@
   <style>
     body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
     .chart-container { width: 100%; height: 100%; min-height: 220px; }
-    /* small tweak so sticky tab header over canvas doesn't hide content */
     thead.sticky { position: sticky; top: 0; z-index: 20; }
   </style>
 </head>
@@ -28,7 +27,7 @@
         <header class="sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between
                    bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-6">
       <div>
-        <div class="text-2xl font-bold tracking-wide">Agent Performance Analytics</div>
+        <div class="text-2xl font-bold tracking-wide">Agent Performance</div>
         <div class="text-gray-600 text-sm">Data of: <strong id="selectedDate">—</strong></div>
       </div>
 
@@ -127,7 +126,7 @@
   
               <div class="lg:col-span-3 space-y-4">
                 <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-                    <h4 class="font-semibold mb-3">Agent Call Volume vs. System Total (Hourly) on <span id="volumeChartDate"></span></h4>
+                    <h4 class="font-semibold mb-3">Total Call vs Agent Call Total (Hourly) on <span id="volumeChartDate"></span></h4>
                     <div class="chart-container h-96"><canvas id="agentVsSystemHourlyCanvas"></canvas></div>
                 </div>
               </div>
@@ -147,7 +146,7 @@
 
             <div class="lg:col-span-3 space-y-4">
               <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-                  <h4 class="font-semibold mb-3">Agent Total Talk Time vs. System Total (Hourly) on <span id="talkTimeChartDate"></span></h4>
+                  <h4 class="font-semibold mb-3">Agent Total Talk Time vs. Team Total (Hourly) on <span id="talkTimeChartDate"></span></h4>
                   <div class="chart-container h-96"><canvas id="talkTimeComparisonChart"></canvas></div>
               </div>
             </div>
@@ -222,7 +221,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script type="module">
-    // ==================== GITHUB DATA – FINAL VERSION WITH DATE-AWARE REPEAT RATE ====================
+    // ==================== GITHUB DATA ====================
     const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
 
     let rawData = {};
@@ -239,15 +238,75 @@
     let talkTimeComparisonChart = null;
     let repeatRateChart = null;
 
-    // ==========================================================================
+    // ==================== MODERN CHART STYLE (Apple / Figma Look) ====================
+    const modernLineChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(255, 255, 255, 0.97)',
+                titleColor: '#0f172a',
+                bodyColor: '#0f172a',
+                borderColor: '#e2e8f0',
+                borderWidth: 1.5,
+                cornerRadius: 16,
+                displayColors: true,
+                padding: 16,
+                titleFont: { size: 15, weight: 'bold' },
+                bodyFont: { size: 14 },
+                caretPadding: 12,
+                boxPadding: 8
+            }
+        },
+        elements: {
+            point: {
+                radius: 4,              // Perfect dot size
+                hoverRadius: 9,         // Slightly larger on hover
+                backgroundColor: '#ffffff',
+                borderWidth: .9,       // Clean white ring
+                hoverBorderWidth: 4,
+                hitRadius: 10
+            },
+            line: {
+                tension: 0.42,
+                borderWidth: 2,         // Elegant thin line (was 7)
+                fill: true
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8', font: { size: 11.5 }, padding: 10 },
+                border: { display: false }
+            },
+            y: {
+                grid: { color: 'rgba(148, 163, 184, 0.15)', lineWidth: 1.5 },
+                ticks: { color: '#64748b', font: { size: 11.5 }, padding: 14 },
+                beginAtZero: true,
+                border: { display: false }
+            }
+        }
+    };
+
+    function destroyChart(chart) {
+        if (chart) {
+            chart.destroy();
+            return null;
+        }
+        return null;
+    }
+
+    // ==================== LOAD DATA ====================
     async function loadDataFromGitHub() {
         try {
-            console.log("Fetching latest data from GitHub...");
+            console.log("Fetching latest data...");
             const res = await fetch(MASTER_DATA_URL + '?t=' + Date.now());
             const json = await res.json();
             rawData = json.calls || {};
             processRawData(rawData);
-            console.log(`Data loaded – ${Object.keys(rawData).length} days available`);
+            console.log(`Data loaded – ${Object.keys(rawData).length} days`);
         } catch (err) {
             console.error("Failed to load data", err);
             document.body.insertAdjacentHTML('afterbegin',
@@ -258,10 +317,8 @@
     }
 
     loadDataFromGitHub();
-    // Optional: auto-refresh every 5 minutes
-    // setInterval(loadDataFromGitHub, 5 * 60 * 1000);
 
-    // ==========================================================================
+    // ==================== UTILITIES ====================
     function safeNum(v) { return Number.isFinite(Number(v)) ? Number(v) : 0; }
 
     function formatSecondsToMinutes(totalSeconds) {
@@ -272,15 +329,11 @@
     }
 
     function updateSelectedDateDisplay(dateStr) {
-        const el = document.getElementById('selectedDate');
-        if (el) el.textContent = dateStr;
-        const v = document.getElementById('volumeChartDate');
-        if (v) v.textContent = dateStr;
-        const t = document.getElementById('talkTimeChartDate');
-        if (t) t.textContent = dateStr;
+        document.getElementById('selectedDate')?.replaceChildren(dateStr);
+        document.getElementById('volumeChartDate')?.replaceChildren(dateStr);
+        document.getElementById('talkTimeChartDate')?.replaceChildren(dateStr);
     }
 
-    // Works with both "2025-11-01" and "2025-11-1"
     function getCallsForDate(dateStr) {
         if (rawData[dateStr]) return rawData[dateStr];
         const parts = dateStr.split('-');
@@ -340,20 +393,17 @@
         renderAllChartsAndTables();
     }
 
-    // ==================== KPIs (Lifetime) ====================
+    // ==================== KPIs & CHARTS ====================
     function renderKPIs() {
         const totalCalls = Object.values(agentStats).reduce((a,s)=> a + s.total, 0);
         const activeAgents = agentList.length;
         const avgAht = totalCalls ? Math.round(Object.values(agentStats).reduce((a,s)=> a + s.ahtSum, 0) / totalCalls) : 0;
-
-        // Correct lifetime repeat rate
         let repeatCalls = 0, totalCallsAll = 0;
         for (const s of Object.values(agentStats)) {
             repeatCalls += s.total - s.uniqueCallers.size;
             totalCallsAll += s.total;
         }
         const repeatPct = totalCallsAll ? Math.round((repeatCalls / totalCallsAll) * 100) : 0;
-
         const topAgent = Object.entries(agentStats).sort((a,b)=> b[1].total - a[1].total)[0]?.[0] || '—';
 
         document.getElementById('kpiTotalCalls')?.replaceChildren(totalCalls);
@@ -391,38 +441,66 @@
 
     function renderAvgHourlyChart(data) {
         const ctx = document.getElementById('avgHourlyChart').getContext('2d');
-        if (avgHourlyChart && avgHourlyChart.destroy());
-        avgHourlyChart = new Chart(ctx, { type: 'line', data: { labels: Array.from({length:24},(_,i)=>`${i}:00`), datasets: [{ data, borderColor: '#004c99', backgroundColor: 'rgba(0,76,153,0.1)', tension: 0.3 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false } });
+        avgHourlyChart = destroyChart(avgHourlyChart);
+
+        avgHourlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [{
+                    data,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#ffffff'
+                }]
+            },
+            options: modernLineChartOptions
+        });
     }
 
     function renderLastDayHourlyChart(data, date) {
         const ctx = document.getElementById('lastDayHourlyChart').getContext('2d');
-        (lastDayHourlyChart && lastDayHourlyChart.destroy());
+        lastDayHourlyChart = destroyChart(lastDayHourlyChart);
+
         const clean = data.map(v => v ?? 0);
-        lastDayHourlyChart = new Chart(ctx, { type: 'bar', data: { labels: Array.from({length:24},(_,i)=>`${i}:00`), datasets: [{ data: clean, backgroundColor: '#f39c12', borderRadius: 4 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false } });
+        lastDayHourlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [{
+                    data: clean,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(251, 146, 60, 0.15)',
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#ffffff'
+                }]
+            },
+            options: modernLineChartOptions
+        });
     }
 
     function renderAgentChips() {
         const containers = ['agentChipContainer', 'agentChipContainerVolume', 'agentChipContainerTalkTime'];
-        const update = (sel) => containers.forEach(id => {
-            const c = document.getElementById(id); if (!c) return;
-            [...c.children].forEach(b => {
-                b.className = b.textContent === sel
-                    ? 'text-sm text-white bg-[#f39c12] font-semibold px-3 py-1.5 rounded-full min-w-[70px] text-center shadow-md transition'
-                    : 'text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full min-w-[70px] text-center transition';
-            });
-        });
-
         containers.forEach(id => {
-            const c = document.getElementById(id); if (!c) return;
+            const c = document.getElementById(id);
+            if (!c) return;
             c.innerHTML = '';
             agentList.forEach(a => {
                 const b = document.createElement('button');
                 b.textContent = a;
-                b.className = a === currentSelectedAgent ? 'text-sm text-white bg-[#f39c12] font-semibold px-3 py-1.5 rounded-full min-w-[70px] text-center shadow-md transition' : 'text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full min-w-[70px] text-center transition';
+                b.className = a === currentSelectedAgent
+                    ? 'text-sm text-white bg-[#f39c12] font-semibold px-4 py-2 rounded-full shadow-lg transition'
+                    : 'text-sm text-gray-700 bg-white/70 hover:bg-white px-4 py-2 rounded-full transition border border-gray-200';
                 b.onclick = () => {
                     currentSelectedAgent = a;
-                    update(a);
+                    containers.forEach(cid => {
+                        [...document.getElementById(cid)?.children || []].forEach(btn => {
+                            btn.className = btn.textContent === a
+                                ? 'text-sm text-white bg-[#f39c12] font-semibold px-4 py-2 rounded-full shadow-lg transition'
+                                : 'text-sm text-gray-700 bg-white/70 hover:bg-white px-4 py-2 rounded-full transition border border-gray-200';
+                        });
+                    });
                     renderAHTHeatmap(a);
                     renderAgentVsSystemHourlyChart(a);
                     renderTalkTimeComparisonChart(a);
@@ -432,53 +510,86 @@
         });
 
         if (agentList.length && !currentSelectedAgent) {
-            document.querySelector('#agentChipContainer button')?.click();
+            currentSelectedAgent = agentList[0];
+            renderAgentChips(); // highlight first
         }
-    }
-
-    function computeAhtPerHour(agent) {
-        const s = agentStats[agent];
-        if (!s) return Array(24).fill(0);
-        return s.hourly.map(arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0);
-    }
-
-    function renderAHTHeatmap(agent) {
-        const data = computeAhtPerHour(agent);
-        const ctx = document.getElementById('ahtHeatmapCanvas').getContext('2d');
-        (ahtHeatmapChart && ahtHeatmapChart.destroy());
-        ahtHeatmapChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: Array.from({length:24},(_,i)=>`${i}:00`), datasets: [{ label: `Avg AHT — ${agent}`, data, backgroundColor: data.map(v=> v===0 ? '#e2e8f0' : v>400 ? '#f39c12' : '#60a5fa'), borderRadius: 4 }] },
-            options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + formatSecondsToMinutes(c.parsed.y) } } }, scales: { y: { beginAtZero: true, ticks: { callback: formatSecondsToMinutes } } }, responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    function getAgentHourlyVolumeOnSelectedDate(agent, dateStr) {
-        const calls = getCallsForDate(dateStr);
-        const h = Array(24).fill(0);
-        for (const id in calls) {
-            if ((calls[id].full_name || "Unknown").trim() === agent) {
-                const d = new Date(calls[id].call_date);
-                if (!isNaN(d)) h[d.getHours()]++;
-            }
-        }
-        return h.map(v => v>0 ? v : null);
     }
 
     function renderAgentVsSystemHourlyChart(agent) {
         const agentData = getAgentHourlyVolumeOnSelectedDate(agent, selectedDate);
         const systemData = computeSelectedDateHourlyVolume(selectedDate);
+
         const ctx = document.getElementById('agentVsSystemHourlyCanvas').getContext('2d');
-        (agentVsSystemHourlyChart && agentVsSystemHourlyChart.destroy());
+        agentVsSystemHourlyChart = destroyChart(agentVsSystemHourlyChart);
+
         agentVsSystemHourlyChart = new Chart(ctx, {
             type: 'line',
-            data: { labels: Array.from({length:24},(_,i)=>`${i}:00`), datasets: [
-                { label: `Calls: ${agent}`, data: agentData, borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,0.1)', pointRadius: 5, borderWidth: 3, tension: 0.3 },
-                { label: 'System Total', data: systemData, borderColor: '#004c99', pointRadius: 5, borderWidth: 3, tension: 0.3 }
-            ]},
-            options: { plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false }
+            data: {
+                labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [
+                    {
+                        label: agent,
+                        data: agentData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(251, 146, 60, 0.15)',
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Team Total',
+                        data: systemData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff'
+                    }
+                ]
+            },
+            options: modernLineChartOptions
         });
-        document.getElementById('volumeChartDate').textContent = selectedDate;
+    }
+
+    function renderTalkTimeComparisonChart(agent) {
+        const { systemData, agentData } = getHourlyTalkTime(agent, selectedDate);
+        const ctx = document.getElementById('talkTimeComparisonChart').getContext('2d');
+        talkTimeComparisonChart = destroyChart(talkTimeComparisonChart);
+
+        talkTimeComparisonChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [
+                    {
+                        label: `Talk Time: ${agent}`,
+                        data: agentData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Team Total',
+                        data: systemData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#ffffff'
+                    }
+                ]
+            },
+            options: {
+                ...modernLineChartOptions,
+                plugins: {
+                    ...modernLineChartOptions.plugins,
+                    tooltip: {
+                        ...modernLineChartOptions.plugins.tooltip,
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${formatSecondsToMinutes(ctx.parsed.y)}`
+                        }
+                    }
+                }
+            }
+        });
     }
 
     function getHourlyTalkTime(agent, dateStr) {
@@ -498,19 +609,56 @@
         return { systemData: sys.map(v=>v>0?v:null), agentData: ag.map(v=>v>0?v:null) };
     }
 
-    function renderTalkTimeComparisonChart(agent) {
-        const { systemData, agentData } = getHourlyTalkTime(agent, selectedDate);
-        const ctx = document.getElementById('talkTimeComparisonChart').getContext('2d');
-        (talkTimeComparisonChart && talkTimeComparisonChart.destroy());
-        talkTimeComparisonChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: Array.from({length:24},(_,i)=>`${i}:00`), datasets: [
-                { label: `Talk Time: ${agent}`, data: agentData, borderColor: '#1abc9c', backgroundColor: 'rgba(26,188,156,0.1)', pointRadius: 5, borderWidth: 3, tension: 0.3 },
-                { label: 'System Total', data: systemData, borderColor: '#c0392b', pointRadius: 5, borderWidth: 3, tension: 0.3 }
-            ]},
-            options: { plugins: { legend: { display: true }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + formatSecondsToMinutes(c.parsed.y) } } }, scales: { y: { beginAtZero: true, ticks: { callback: formatSecondsToMinutes } } }, responsive: true, maintainAspectRatio: false }
+    function getAgentHourlyVolumeOnSelectedDate(agent, dateStr) {
+        const calls = getCallsForDate(dateStr);
+        const h = Array(24).fill(0);
+        for (const id in calls) {
+            if ((calls[id].full_name || "Unknown").trim() === agent) {
+                const d = new Date(calls[id].call_date);
+                if (!isNaN(d)) h[d.getHours()]++;
+            }
+        }
+        return h.map(v => v>0 ? v : null);
+    }
+
+    function computeAhtPerHour(agent) {
+        const s = agentStats[agent];
+        if (!s) return Array(24).fill(0);
+        return s.hourly.map(arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0);
+    }
+
+    function renderAHTHeatmap(agent) {
+        const data = computeAhtPerHour(agent);
+        const ctx = document.getElementById('ahtHeatmapCanvas').getContext('2d');
+        ahtHeatmapChart = destroyChart(ahtHeatmapChart);
+
+        ahtHeatmapChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Array.from({length:24},(_,i)=>`${i}:00`),
+                datasets: [{
+                    label: `Avg AHT — ${agent}`,
+                    data,
+                    backgroundColor: data.map(v => v===0 ? '#e2e8f0' : v>400 ? '#f59e0b' : '#60a5fa'),
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: c => `${c.dataset.label}: ${formatSecondsToMinutes(c.parsed.y)}` } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: formatSecondsToMinutes, color: '#64748b' }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
         });
-        document.getElementById('talkTimeChartDate').textContent = selectedDate;
     }
 
     function renderLoginSummary() {
@@ -532,7 +680,7 @@
         c.innerHTML = html;
     }
 
-    // CORRECT + DATE-AWARE REPEAT RATE CHART
+    
     function renderRepeatRateChartForSelectedDate() {
         const calls = getCallsForDate(selectedDate);
         const agentStatsToday = {};
@@ -626,19 +774,21 @@
         renderAvgHourlyChart(computeAvgHourlyVolume());
         renderLastDayHourlyChart(computeSelectedDateHourlyVolume(selectedDate), selectedDate);
         renderLoginSummary();
-        renderRepeatRateChartForSelectedDate();  // Now respects date picker
+        renderRepeatRateChartForSelectedDate();
         renderLeaderboard();
         renderCallSummaryTable();
 
         if (agentList.length) {
             const agent = currentSelectedAgent || agentList[0];
+            currentSelectedAgent = agent;
             renderAHTHeatmap(agent);
             renderAgentVsSystemHourlyChart(agent);
             renderTalkTimeComparisonChart(agent);
+            renderAgentChips();
         }
     }
 
-    // Tabs
+    // Tabs & Events
     document.addEventListener('click', e => {
         const btn = e.target.closest('.tab-btn');
         if (!btn) return;
@@ -649,18 +799,12 @@
         btn.classList.add('text-[#004c99]','font-semibold','border-b-2','border-[#004c99]');
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         document.querySelector(`.tab-panel[data-panel="${btn.dataset.tab}"]`)?.classList.remove('hidden');
-
-        // Resize charts when tab opens
-        const map = {repeat: repeatRateChart, aht: ahtHeatmapChart, volume: agentVsSystemHourlyChart, talktime: talkTimeComparisonChart};
-        map[btn.dataset.tab]?.resize();
     });
 
-    setTimeout(() => document.querySelector('.tab-btn[data-tab="aht"]')?.click(), 100);
-
-    // Reload button
     document.getElementById('btnReload')?.addEventListener('click', loadDataFromGitHub);
 
-    // Date picker
+    setTimeout(() => document.querySelector('.tab-btn[data-tab="aht"]')?.click(), 200);
+
     try {
         flatpickr('#datePicker', {
             altInput: true,
