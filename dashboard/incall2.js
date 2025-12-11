@@ -1,4 +1,4 @@
-// app-git.js —Keeps Your Original Billing Behavior
+// app-git.js - dashboard/incall2.js
 
 const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
 
@@ -7,12 +7,65 @@ if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
 }
 
-function createGradient(ctx, color) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-    gradient.addColorStop(0, color + "55");   // 33% opacity
-    gradient.addColorStop(1, color + "00");   // transparent
-    return gradient;
-}
+// ---------------------------
+// PREMIUM MODERN LINE CHART STYLE 
+// ---------------------------
+const modernLineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+        legend: {
+            display: true,
+            position: 'top',
+            labels: {
+                font: { size: 13, weight: '600' },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+            }
+        },
+        title: {
+            display: false   // Remove title
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.97)',
+            titleColor: '#0f172a',
+            bodyColor: '#0f172a',
+            borderColor: '#e2e8f0',
+            borderWidth: 1.5,
+            cornerRadius: 16,
+            displayColors: true,
+            padding: 16,
+            titleFont: { size: 15, weight: 'bold' },
+            bodyFont: { size: 14 },
+            caretPadding: 12,
+            boxPadding: 8
+        },
+        datalabels: {
+            display: false   // ← Removes the floating numbers (72, 65, etc.)
+        }
+    },
+    elements: {
+        point: {
+            radius: 6,
+            hoverRadius: 9,
+            backgroundColor: '#ffffff',
+            borderWidth: 3.5,
+            hoverBorderWidth: 4.5,
+            hitRadius: 10
+        },
+        line: {
+            tension: 0.42,
+            borderWidth: 4,
+            fill: true
+        }
+    },
+    scales: {
+        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11.5 } }, border: { display: false } },
+        y: { grid: { color: 'rgba(148, 163, 184, 0.15)' }, ticks: { color: '#64748b', padding: 14 }, beginAtZero: true, border: { display: false } }
+    }
+};
 
 // ---------------------------
 // Config & Globals
@@ -21,8 +74,8 @@ const BILLING_ISSUE_REASON = "Billing Issue";
 
 const GENERAL_ACHT_COLOR = '#FF8A42';
 const GENERAL_VOLUME_COLOR = '#124E8C';
-const BILLING_ACHT_COLOR = 'rgba(208, 0, 110, 0.5)';
-const BILLING_VOLUME_COLOR = 'rgba(0, 201, 167, 0.5)';
+const BILLING_ACHT_COLOR = '#794dff';
+const BILLING_VOLUME_COLOR = '#03b6d4';
 
 const REGION_COLORS = { 'Rural':'#4A90E2', 'Urban':'#7ED321', 'N/A':'#555555' };
 const FCR_COLORS = ['#4A90E2','#fb923c'];
@@ -35,25 +88,28 @@ let availableDates = [];
 // ---------------------------
 // Utilities
 // ---------------------------
-function destroyIfExists(id){ if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function destroyIfExists(id){ 
+    if(charts[id]) { 
+        charts[id].destroy(); 
+        delete charts[id]; 
+    } 
+}
+
 function formatTime(seconds){
     if(!seconds && seconds !== 0) return "0s";
     const m = Math.floor(seconds/60), s = Math.round(seconds%60);
     return m>0 ? `${m}m ${s}s` : `${s}s`;
 }
+
 function getHourFromDate(dateStr){
     const d = new Date(dateStr);
     return isNaN(d) ? "00" : String(d.getHours()).padStart(2,'0');
 }
 
-// Raw comments as billing sub-reasons (unchanged)
 function categorizeBillingCall(call){
     return (call.comments || "Comment Not Provided").trim();
 }
 
-// ---------------------------
-// Region normalizer
-// ---------------------------
 function normalizeRegion(raw) {
     if (raw === null || raw === undefined) return "N/A";
     const v = String(raw).trim().toLowerCase();
@@ -72,25 +128,8 @@ function normalizeRegion(raw) {
 }
 
 // ---------------------------
-// Chart Helpers
+// Chart Helpers (Unchanged - No Mixed for Hourly)
 // ---------------------------
-function createMixed(id, labels=[], datasets=[]){
-    destroyIfExists(id);
-    const ctx = document.getElementById(id);
-    if(!ctx) return;
-    charts[id] = new Chart(ctx, {
-        type:'bar',
-        data:{ labels, datasets },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            interaction:{ mode:'index', intersect:false },
-            plugins:{ legend:{ position:'top' }, datalabels: { display:false } },
-            scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, grid:{ borderDash:[2,4] } } }
-        }
-    });
-}
-
 function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, isRegion = false) {
     destroyIfExists(id);
     const ctx = document.getElementById(id);
@@ -120,8 +159,11 @@ function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, is
                 data: finalData,
                 backgroundColor: backgroundColors,
                 borderColor: '#ffffff',
-                borderWidth: 4,
-                cutout: '68%'
+                borderWidth: 6,
+                borderRadius: 8,
+                hoverBorderWidth: 8,
+                cutout: '72%',
+                spacing: 2
             }]
         },
         options: {
@@ -140,51 +182,92 @@ function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, is
                     }
                 },
                 tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // Same style as line charts
                     callbacks: {
-                        label: ctx => {
-                            const v = ctx.parsed;
-                            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
-                            const perc = total > 0 ? Math.round((v/total)*100) : 0;
-                            return `${ctx.label}: ${v.toLocaleString()} (${perc}%)`;
+                        label: (ctx) => {
+                            const value = ctx.parsed;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${value.toLocaleString()} calls (${percentage}%)`;
                         }
                     }
                 },
-                datalabels: {
-                    color: '#ffffff',
-                    font: { weight: 'bold', size: 14 },
-                    textStrokeColor: '#000',
-                    textStrokeWidth: 3,
-                    textShadowBlur: 6,
-                    textShadowColor: 'rgba(0,0,0,0.7)',
-                    formatter: (value) => value >= 100 ? value.toLocaleString() : (value === 0 ? '' : value)
-                }
+                datalabels: { display: false }   // No numbers inside the ring
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true
             }
         }
     });
 }
 
-function createButterflyChart(id, labels=[], leftData=[], rightData=[], leftLabel='Avg ACHT', rightLabel='Volume', title='Top 10 Reasons', achtColor=GENERAL_ACHT_COLOR, volumeColor=GENERAL_VOLUME_COLOR){
+function createButterflyChart(id, labels = [], leftData = [], rightData = [], leftLabel = 'Avg ACHT', rightLabel = 'Volume', title = 'Top 10 Reasons', achtColor = GENERAL_ACHT_COLOR, volumeColor = GENERAL_VOLUME_COLOR) {
     destroyIfExists(id);
     const ctx = document.getElementById(id);
-    if(!ctx) return;
+    if (!ctx) return;
+
     charts[id] = new Chart(ctx, {
-        type:'bar',
-        data:{ labels, datasets:[
-            { label:leftLabel, data:leftData, backgroundColor:achtColor, barPercentage:0.8, categoryPercentage:0.8, stack:'stack0', datalabels:{ color:'#000', anchor:'middle', align:'left', formatter:v=>Math.abs(v) } },
-            { label:rightLabel, data:rightData, backgroundColor:volumeColor, barPercentage:0.8, categoryPercentage:0.8, stack:'stack0', datalabels:{ color:'#000', anchor:'end', align:'right' } }
-        ]},
-        options:{
-            indexAxis:'y',
-            responsive:true,
-            maintainAspectRatio:false,
-            scales:{
-                x:{ position:'top', ticks:{ callback:v=>Math.abs(v), font:{ size:13 } }, grid:{ drawOnChartArea:true, color:'rgba(0,0,0,0.05)' }, border:{ display:false } },
-                y:{ ticks:{ font:{ size:14, weight:'bold' } }, grid:{ drawOnChartArea:false } }
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: leftLabel,
+                    data: leftData,
+                    backgroundColor: achtColor,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.8,
+                    stack: 'stack0',
+                    datalabels: { display: false }  // we remove old datalabels
+                },
+                {
+                    label: rightLabel,
+                    data: rightData,
+                    backgroundColor: volumeColor,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.8,
+                    stack: 'stack0',
+                    datalabels: { display: false }
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    position: 'top',
+                    ticks: {
+                        callback: v => Math.abs(v),
+                        font: { size: 13 }
+                    },
+                    grid: { drawOnChartArea: true, color: 'rgba(0,0,0,0.05)' },
+                    border: { display: false }
+                },
+                y: {
+                    ticks: { font: { size: 14, weight: 'bold' } },
+                    grid: { drawOnChartArea: false }
+                }
             },
-            plugins:{
-                legend:{ display:true },
-                tooltip:{ callbacks:{ label: ctx => ctx.dataset.label + ": " + Math.abs(ctx.raw) } },
-                title:{ display:true, text:title, font:{ size:16 } }
+            plugins: {
+                legend: { display: true },
+                title: { display: false, text: title, font: { size: 16 } },
+                tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // SAME BEAUTIFUL STYLE!
+                    callbacks: {
+                        label: (ctx) => {
+                            const value = Math.abs(ctx.parsed.x);
+                            const label = ctx.dataset.label || '';
+                            if (label.includes('AHT') || label.includes('ACHT')) {
+                                return `${label}: ${formatTime(value)}`;
+                            }
+                            return `${label}: ${value.toLocaleString()}`;
+                        }
+                    }
+                },
+                datalabels: { display: false }   // clean look
             }
         }
     });
@@ -203,35 +286,87 @@ function createRadar(id, labels = [], dataArr = [], labelName = "Count") {
                 label: labelName,
                 data: dataArr,
                 fill: true,
-                borderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                backgroundColor: "rgba(74,144,226,0.25)",
-                borderColor: "#4A90E2"
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',   // Soft blue fill
+                borderColor: '#3b82f6',                        // Vibrant blue line
+                borderWidth: 4,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 9,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#3b82f6',
+                pointHoverBorderWidth: 4,
+                tension: 0.3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                r: {
-                    min: 0,
-                    grid: { color: "rgba(0,0,0,0.1)" },
-                    angleLines: { color: "rgba(0,0,0,0.15)" },
-                    ticks: { backdropColor: "transparent" }
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: { size: 13, weight: '600' },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#1e293b'
+                    }
+                },
+                tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // SAME BEAUTIFUL TOOLTIP!
+                    callbacks: {
+                        label: (ctx) => {
+                            const value = ctx.parsed.r;
+                            return `${ctx.dataset.label}: ${value.toLocaleString()}`;
+                        }
+                    }
                 }
             },
-            plugins: { legend: { display: true } }
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.2)',
+                        lineWidth: 1.5
+                    },
+                    angleLines: {
+                        color: 'rgba(148, 163, 184, 0.2)',
+                        lineWidth: 1.5
+                    },
+                    pointLabels: {
+                        font: { size: 12, weight: '500' },
+                        color: '#64748b',
+                        padding: 20
+                    },
+                    ticks: {
+                        backdropColor: 'transparent',
+                        color: '#94a3b8',
+                        font: { size: 11 },
+                        stepSize: Math.max(1, Math.ceil(Math.max(...dataArr) / 5)) || 1
+                    }
+                }
+            },
+            elements: {
+                line: {
+                    borderJoinStyle: 'round'
+                }
+            },
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
+            }
         }
     });
 }
-
 // ---------------------------
 // Init Empty Charts
 // ---------------------------
 function initEmptyCharts(){
-    createMixed("avgHourlyChart", [], []);
-    createMixed("lastDayHourlyChart", [], []);
+    destroyIfExists("avgHourlyChart");
+    destroyIfExists("lastDayHourlyChart");
     createPie("monthRegionPie", [], [], [], false, true);
     createPie("lastDayRegionPie", [], [], [], false, true);
     createPie("monthFCRPie", ['FCR','Non-FCR'], [0,0], FCR_COLORS, true);
@@ -248,7 +383,7 @@ function initEmptyCharts(){
 initEmptyCharts();
 
 // ---------------------------
-// Flatpickr
+// Flatpickr & Reload
 // ---------------------------
 const fp = flatpickr("#datePicker", {
     dateFormat:"Y-m-d",
@@ -258,13 +393,14 @@ const fp = flatpickr("#datePicker", {
         if(!dateStr) return;
         selectedDate = dateStr;
         document.getElementById('selectedDate').textContent = selectedDate;
+        syncDateEverywhere();        // ← This is the magic line
         renderForSelectedDate();
     }
 });
 document.getElementById('btnReload')?.addEventListener('click', ()=>{ if(availableDates.length) selectLatestDate(); fetchAndRefresh(); });
 
 // ---------------------------
-// Data Normalization
+// Data Normalization (FIXED Syntax)
 // ---------------------------
 function normalizeFromRows(rows){
     const normalized = {};
@@ -334,8 +470,17 @@ function selectLatestDate(){
     try { fp.setDate(selectedDate, true, "Y-m-d"); } catch(e){ /* ignore */ }
 }
 
+// NEW: Sync selected date to all places automatically
+function syncDateEverywhere() {
+    const date = document.getElementById('selectedDate')?.textContent || '—';
+    document.querySelectorAll('.date-mirror').forEach(el => {
+        el.textContent = date;
+    });
+}
+
+
 // ---------------------------
-// Monthly Aggregates
+// Monthly Aggregates with Modern Line Chart
 // ---------------------------
 function renderAveragesAndMonthPies(){
     const sumTotal = {}, sumUnique = {}, sumAgents = {};
@@ -364,7 +509,7 @@ function renderAveragesAndMonthPies(){
             reasonStats[reason].sumAcht += duration;
 
             if(reason === BILLING_ISSUE_REASON){
-                const sub = categorizeBillingCall(call);  // ← Raw comments (as requested)
+                const sub = categorizeBillingCall(call);
                 if(!billingSubReasonStats[sub]) billingSubReasonStats[sub] = { count:0, sumAcht:0 };
                 billingSubReasonStats[sub].count += 1;
                 billingSubReasonStats[sub].sumAcht += duration;
@@ -392,12 +537,56 @@ function renderAveragesAndMonthPies(){
     const avgUniqueArr = hours.map(h => Math.round(sumUnique[h] / daysCount));
     const avgAgentsArr = hours.map(h => Math.round(sumAgents[h] / daysCount));
 
-    createMixed("avgHourlyChart", hours, [
-        { type:'bar', label:'Avg Calls', data:avgTotalArr, backgroundColor:'rgba(74,144,226,0.6)', borderRadius:4, barPercentage:0.6 },
-        { type:'line', label:'Avg Unique', data:avgUniqueArr, borderColor:'rgba(255,99,132,1.0)', borderWidth:2, tension:0.4, pointRadius:3 },
-        { type:'line', label:'Avg Agents', data:avgAgentsArr, borderColor:'rgba(86,201,138,1.0)', borderWidth:2, tension:0.4, pointRadius:3 }
-    ]);
+    // MODERN LINE CHART: Average Hourly (All Time)
+    console.log('Creating modern avgHourlyChart...'); // Debug
+    destroyIfExists("avgHourlyChart");
+    const avgCtx = document.getElementById("avgHourlyChart");
+    if (avgCtx) {
+        charts["avgHourlyChart"] = new Chart(avgCtx, {
+            type: 'line',
+            data: {
+                labels: hours.map(h => `${h}:00`),
+                datasets: [
+                    {
+                        label: 'Avg Calls / Hour',
+                        data: avgTotalArr,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Avg Unique Callers',
+                        data: avgUniqueArr,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(251, 146, 11, 0.14)',
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Avg Agents Online',
+                        data: avgAgentsArr,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff'
+                    }
+                ]
+            },
+            options: {
+                ...modernLineChartOptions,
+                plugins: {
+                    ...modernLineChartOptions.plugins,
+                    title: { display: false, text: 'Average Hourly Activity (All Time)', font: { size: 16 } }
+                }
+            }
+        });
+        console.log('avgHourlyChart created successfully');
+    } else {
+        console.error('Canvas "avgHourlyChart" not found!');
+    }
 
+    // Rest of monthly charts (unchanged)
     createPie("monthRegionPie", Object.keys(regionMonth), Object.keys(regionMonth).map(l => regionMonth[l]), [], false, true);
     createPie("monthFCRPie", ['FCR','Non-FCR'], [monthFCR, monthNonFCR], FCR_COLORS, true);
 
@@ -418,7 +607,7 @@ function renderAveragesAndMonthPies(){
 }
 
 // ---------------------------
-// Daily View + Spikes + Worst Hour
+// Daily View with Modern Line Chart
 // ---------------------------
 function renderForSelectedDate(){
     if(!selectedDate || !groupedData[selectedDate]) return;
@@ -453,7 +642,7 @@ function renderForSelectedDate(){
         dayReasonStats[reason].count += 1; dayReasonStats[reason].sumAcht += duration;
 
         if(reason === BILLING_ISSUE_REASON){
-            const sub = categorizeBillingCall(call);  // ← Raw comments (as requested)
+            const sub = categorizeBillingCall(call);
             if(!dayBillingSubReasonStats[sub]) dayBillingSubReasonStats[sub] = { count:0, sumAcht:0 };
             dayBillingSubReasonStats[sub].count += 1;
             dayBillingSubReasonStats[sub].sumAcht += duration;
@@ -476,12 +665,57 @@ function renderForSelectedDate(){
     document.getElementById('kpiAvgHandleTime').textContent = formatTime(avgHandle);
 
     const hours = Array.from({length:24},(_,i)=>String(i).padStart(2,'0'));
-    createMixed("lastDayHourlyChart", hours, [
-        { type:'bar', label:'Total', data: hours.map(h => totals[h] || 0), backgroundColor:'rgba(255,179,64,0.7)', borderRadius:4, barPercentage:0.6 },
-        { type:'line', label:'Unique', data: hours.map(h => unique[h]?.size || 0), borderColor:'rgba(255,99,132,1.0)', borderWidth:2, tension:0.4, pointRadius:3 },
-        { type:'line', label:'Agents', data: hours.map(h => agents[h]?.size || 0), borderColor:'rgba(86,201,138,1.0)', borderWidth:2, tension:0.4, pointRadius:3 }
-    ]);
 
+    // MODERN LINE CHART: Selected Date Hourly
+    console.log('Creating modern lastDayHourlyChart...'); // Debug
+    destroyIfExists("lastDayHourlyChart");
+    const lastCtx = document.getElementById("lastDayHourlyChart");
+    if (lastCtx) {
+        charts["lastDayHourlyChart"] = new Chart(lastCtx, {
+            type: 'line',
+            data: {
+                labels: hours.map(h => `${h}:00`),
+                datasets: [
+                    {
+                        label: 'Total Calls',
+                        data: hours.map(h => totals[h] || 0),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(251, 146, 11, 0.16)',
+                        pointBackgroundColor: '#f59e0b',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Unique Callers',
+                        data: hours.map(h => unique[h]?.size || 0),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff'
+                    },
+                    {
+                        label: 'Agents Online',
+                        data: hours.map(h => agents[h]?.size || 0),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff'
+                    }
+                ]
+            },
+            options: {
+                ...modernLineChartOptions,
+                plugins: {
+                    ...modernLineChartOptions.plugins,
+                    title: { display: false, text: `Hourly Call – ${selectedDate}`, font: { size: 16 } }
+                }
+            }
+        });
+        console.log('lastDayHourlyChart created successfully');
+    } else {
+        console.error('Canvas "lastDayHourlyChart" not found!');
+    }
+
+    // Rest of daily charts (unchanged)
     createPie("lastDayRegionPie", Object.keys(region), Object.keys(region).map(l => region[l]), [], false, true);
     createPie("lastDayFCRPie", ['FCR','Non-FCR'], [fcr, nonFcr], FCR_COLORS, true);
 
@@ -500,16 +734,15 @@ function renderForSelectedDate(){
     createRadar("reasonRadardaily", Object.keys(dayReasonStats), Object.keys(dayReasonStats).map(r => dayReasonStats[r].count), "Daily Volume");
     createRadar("billingReasonRadardaily", Object.keys(dayBillingSubReasonStats), Object.keys(dayBillingSubReasonStats).map(r => dayBillingSubReasonStats[r].count), "Daily Billing Sub-Reason Volume");
 
-    // Fixed: Now correctly placed
     renderSpikingReasons();
     renderWorstHourBadge();
 }
 
 // ---------------------------
-// Month-over-Month Chart
+// Month-over-Month Charts
 // ---------------------------
 function createMonthOverMonthChart() {
-    destroyIfExists("monthOverMonthChart"); // ← Critical fix
+    destroyIfExists("monthOverMonthChart");
 
     const monthlyStats = {};
     for (const dateKey in groupedData) {
@@ -546,8 +779,34 @@ function createMonthOverMonthChart() {
         data: {
             labels: labels,
             datasets: [
-                { type: 'bar', label: 'Avg Daily Calls', data: volumeData, backgroundColor: 'rgba(74, 144, 226, 0.7)', borderRadius: 6, yAxisID: 'y' },
-                { type: 'line', label: 'Avg AHT (seconds)', data: ahtData, borderColor: '#ff6b6b', backgroundColor: '#ff6b6b', borderWidth: 4, tension: 0.4, pointRadius: 6, pointHoverRadius: 8, yAxisID: 'y1' }
+                {
+                    type: 'bar',
+                    label: 'Avg Daily Calls',
+                    data: volumeData,
+                    backgroundColor: 'rgba(74, 144, 226, 0.75)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barPercentage: 0.8,
+                    yAxisID: 'y'
+                },
+                {
+                    type: 'line',
+                    label: 'Avg AHT (seconds)',
+                    data: ahtData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    borderWidth: 5,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ef4444',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 4,
+                    pointRadius: 8,
+                    pointHoverRadius: 11,
+                    fill: true,
+                    yAxisID: 'y1'
+                }
             ]
         },
         options: {
@@ -555,23 +814,73 @@ function createMonthOverMonthChart() {
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             plugins: {
-                title: { display: true, text: 'Month-over-Month: Volume vs Average Handle Time', font: { size: 16 } },
-                legend: { position: 'top' },
+                title: {
+                    display: false,
+                    text: 'Month-over-Month: Volume vs AHT',
+                    font: { size: 16, weight: '600' },
+                    color: '#1e293b',
+                    padding: { top: 10, bottom: 20 }
+                },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: { size: 13, weight: '600' },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#1e293b'
+                    },
+                    onHover: (e) => e.native.target.style.cursor = 'pointer'
+                },
                 tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // SAME PREMIUM STYLE!
                     callbacks: {
-                        afterLabel: ctx => ctx.dataset.label.includes('AHT') ? `     ${Math.floor(ctx.parsed.y/60)}m ${ctx.parsed.y%60}s` : ''
+                        title: (ctx) => ctx[0].label,
+                        label: (ctx) => {
+                            if (ctx.dataset.label.includes('AHT')) {
+                                const secs = ctx.parsed.y;
+                                const mins = Math.floor(secs / 60);
+                                const sec = secs % 60;
+                                return `${ctx.dataset.label}: ${mins}m ${sec}s`;
+                            }
+                            return `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`;
+                        }
                     }
                 }
             },
             scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Avg Daily Calls' }, grid: { drawOnChartArea: false } },
-                y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Avg AHT (seconds)', color: '#ff6b6b' }, ticks: { color: '#ff6b6b' }, grid: { drawOnChartArea: false } },
-                x: { grid: { display: false } }
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b', font: { size: 12 } },
+                    border: { display: false }
+                },
+                y: {
+                    position: 'left',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Avg Daily Calls', color: '#3b82f6', font: { size: 13 } },
+                    grid: { color: 'rgba(148, 163, 184, 0.15)', drawOnChartArea: true },
+                    ticks: { color: '#64748b', padding: 10 }
+                },
+                y1: {
+                    position: 'right',
+                    beginAtZero: true,
+                    title: { display: true, text: 'Avg AHT (seconds)', color: '#ef4444', font: { size: 13 } },
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#ef4444', padding: 10 }
+                }
+            },
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
             }
         }
     });
 }
 
+// ---------------------------
+// FCR Trend Chart 
+// ---------------------------
 function createFCRTrendChart() {
     destroyIfExists("fcrTrendChart");
 
@@ -605,34 +914,73 @@ function createFCRTrendChart() {
             datasets: [{
                 label: 'FCR %',
                 data: fcrPercent,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                borderColor: '#10b981',                    // Emerald green
+                backgroundColor: 'rgba(16, 185, 129, 0.18)', // Soft fill
                 borderWidth: 5,
+                tension: 0.42,
+                fill: true,
                 pointBackgroundColor: '#10b981',
-                pointRadius: 7,
-                pointHoverRadius: 10,
-                tension: 0.4,
-                fill: true
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 4,
+                pointRadius: 8,
+                pointHoverRadius: 11,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#10b981',
+                pointHoverBorderWidth: 5
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: {
-                title: { display: true, text: 'First Call Resolution (FCR%) Trend', font: { size: 16 } },
+                title: {
+                    display: false,
+                    text: 'First Call Resolution (FCR%) Trend',
+                    font: { size: 16, weight: '600' },
+                    color: '#1e293b',
+                    padding: { top: 10, bottom: 25 }
+                },
                 legend: { display: false },
-                tooltip: { callbacks: { label: ctx => `FCR: ${ctx.parsed.y}%` } }
+                tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // SAME PREMIUM TOOLTIP!
+                    callbacks: {
+                        label: (ctx) => `FCR: ${ctx.parsed.y}%`
+                    }
+                }
             },
             scales: {
-                y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
-                x: { grid: { display: false } }
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b', font: { size: 12 } },
+                    border: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(148, 163, 184, 0.15)', lineWidth: 1.5 },
+                    ticks: {
+                        callback: v => v + '%',
+                        color: '#64748b',
+                        font: { size: 12 },
+                        padding: 10
+                    },
+                    border: { display: false }
+                }
+            },
+            elements: {
+                line: { borderJoinStyle: 'round' }
+            },
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
             }
         }
     });
 }
 
 // ---------------------------
-// Spiking Reasons & Worst Hour
+// Spiking Reasons & Worst Hour Badges
 // ---------------------------
 function renderSpikingReasons() {
     if (!selectedDate || !groupedData[selectedDate]) {
@@ -760,5 +1108,4 @@ function fetchDataAndProcess(){ return fetchAndRefresh(); }
 // Initial load
 fetchAndRefresh();
 
-// Debugging helper
 window.__dashboard = { fetchDataAndProcess, groupedData, charts, normalizeRegion };
