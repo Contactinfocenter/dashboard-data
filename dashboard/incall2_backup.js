@@ -16,7 +16,7 @@ const modernLineChartOptions = {
     plugins: {
         legend: {
             display: true,
-            position: 'bottom',
+            position: 'top',
             labels: {
                 font: { size: 13, weight: '600' },
                 padding: 20,
@@ -158,10 +158,6 @@ function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, is
         backgroundColors = FCR_COLORS;
     }
 
-    const total = finalData.reduce((a, b) => a + b, 0);
-    const maxValue = Math.max(...finalData);
-    const maxPercentage = total > 0 ? Math.round((maxValue / total) * 100) : 0;
-
     charts[id] = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -170,11 +166,11 @@ function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, is
                 data: finalData,
                 backgroundColor: backgroundColors,
                 borderColor: '#ffffff',
-                borderWidth: 4,
-                borderRadius: 12,
-                spacing: 4,
-                cutout: '75%',                    // Super thin ring
-                hoverOffset: 12
+                borderWidth: 6,
+                borderRadius: 8,
+                hoverBorderWidth: 8,
+                cutout: '72%',
+                spacing: 2
             }]
         },
         options: {
@@ -182,49 +178,34 @@ function createPie(id, labels = [], dataArr = [], colors = [], isFCR = false, is
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    display: true,
                     position: 'bottom',
                     labels: {
+                        font: { size: 13, weight: '600' },
                         padding: 20,
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        font: { size: 13, weight: '600' },
                         color: '#1e293b'
                     }
                 },
                 tooltip: {
-                    ...modernLineChartOptions.plugins.tooltip,
+                    ...modernLineChartOptions.plugins.tooltip,   // Same style as line charts
                     callbacks: {
-                        label: ctx => {
+                        label: (ctx) => {
                             const value = ctx.parsed;
-                            const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                            return `${ctx.label}: ${value.toLocaleString()} (${pct}%)`;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${value.toLocaleString()} calls (${percentage}%)`;
                         }
                     }
-                }
+                },
+                datalabels: { display: false }   // No numbers inside the ring
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true
             }
-        },
-        plugins: [{
-            id: 'centerText',
-            afterDraw(chart) {
-                const ctx = chart.ctx;
-                const width = chart.width;
-                const height = chart.height;
-
-                ctx.save();
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.font = 'bold 48px Inter';
-                ctx.fillStyle = '#1e293b';
-                ctx.fillText(`${maxPercentage}%`, width / 2, height / 2);
-
-                // Optional: subtitle
-                // ctx.font = '14px Inter';
-                // ctx.fillStyle = '#64748b';
-                // ctx.fillText('of total calls', width / 2, height / 2 + 30);
-
-                ctx.restore();
-            }
-        }]
+        }
     });
 }
 
@@ -299,93 +280,92 @@ function createButterflyChart(id, labels = [], leftData = [], rightData = [], le
     });
 }
 
-function createTopReasonsChart(id, reasonData = {}, title = "Call Reason Distribution", limit = 8) {
+function createRadar(id, labels = [], dataArr = [], labelName = "Count") {
     destroyIfExists(id);
     const ctx = document.getElementById(id);
-    if (!ctx || !reasonData || Object.keys(reasonData).length === 0) {
-        ctx && (ctx.parentElement.innerHTML = `<div class="text-center py-12 text-gray-500 italic">No data available</div>`);
-        return;
-    }
-
-    // Sort and take top N
-    const sorted = Object.entries(reasonData)
-        .map(([reason, count]) => ({ reason, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, limit);
-
-    const total = sorted.reduce((sum, item) => sum + item.count, 0);
-    const maxCount = Math.max(...sorted.map(d => d.count), 1);
+    if (!ctx) return;
 
     charts[id] = new Chart(ctx, {
-        type: 'bar',
+        type: 'radar',
         data: {
-            labels: sorted.map(d => d.reason),
+            labels,
             datasets: [{
-                label: 'Calls',
-                data: sorted.map(d => d.count),
-                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                borderColor: '#3b82f6',
-                borderWidth: 2,
-                borderRadius: 8,
-                borderSkipped: false,
-                barPercentage: 0.85,
-                categoryPercentage: 0.8
+                label: labelName,
+                data: dataArr,
+                fill: true,
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',   // Soft blue fill
+                borderColor: '#3b82f6',                        // Vibrant blue line
+                borderWidth: 4,
+                pointBackgroundColor: '#3b82f6',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 3,
+                pointRadius: 6,
+                pointHoverRadius: 9,
+                pointHoverBackgroundColor: '#ffffff',
+                pointHoverBorderColor: '#3b82f6',
+                pointHoverBorderWidth: 4,
+                tension: 0.3
             }]
         },
         options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
             plugins: {
-                title: {
+                legend: {
                     display: true,
-                    text: title,
-                    font: { size: 16, weight: '600' },
-                    color: '#1e293b',
-                    padding: { bottom: 20 }
-                },
-                legend: { display: false },
-                tooltip: {
-                    ...modernLineChartOptions.plugins.tooltip,
-                    callbacks: {
-                        label: (ctx) => {
-                            const value = ctx.parsed.x;
-                            const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-                            return `${value.toLocaleString()} calls (${pct}%)`;
-                        }
+                    position: 'top',
+                    labels: {
+                        font: { size: 13, weight: '600' },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#1e293b'
                     }
                 },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#1e293b',
-                    font: { weight: 'bold', size: 13 },
-                    formatter: (value) => value.toLocaleString(),
-                    offset: 8
+                tooltip: {
+                    ...modernLineChartOptions.plugins.tooltip,   // SAME BEAUTIFUL TOOLTIP!
+                    callbacks: {
+                        label: (ctx) => {
+                            const value = ctx.parsed.r;
+                            return `${ctx.dataset.label}: ${value.toLocaleString()}`;
+                        }
+                    }
                 }
             },
             scales: {
-                x: {
-                    display: false,
-                    beginAtZero: true
-                },
-                y: {
-                    grid: { display: false },
-                    ticks: {
-                        font: { size: 13, weight: '500' },
-                        color: '#374151',
-                        padding: 10
+                r: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.2)',
+                        lineWidth: 1.5
                     },
-                    border: { display: false }
+                    angleLines: {
+                        color: 'rgba(148, 163, 184, 0.2)',
+                        lineWidth: 1.5
+                    },
+                    pointLabels: {
+                        font: { size: 12, weight: '500' },
+                        color: '#64748b',
+                        padding: 20
+                    },
+                    ticks: {
+                        backdropColor: 'transparent',
+                        color: '#94a3b8',
+                        font: { size: 11 },
+                        stepSize: Math.max(1, Math.ceil(Math.max(...dataArr) / 5)) || 1
+                    }
+                }
+            },
+            elements: {
+                line: {
+                    borderJoinStyle: 'round'
                 }
             },
             animation: {
                 duration: 1200,
                 easing: 'easeOutQuart'
             }
-        },
-        plugins: [ChartDataLabels] // Make sure you have ChartDataLabels registered
+        }
     });
 }
 // ---------------------------
@@ -402,7 +382,10 @@ function initEmptyCharts(){
     createButterflyChart("dayButterflyChart", [], [], [], "Avg ACHT", "Daily Volume", "Top 10 Reasons");
     createButterflyChart("monthBillingButterfly", [], [], [], "Avg ACHT", "Avg Daily Volume", "Billing Sub-Reasons", BILLING_ACHT_COLOR, BILLING_VOLUME_COLOR);
     createButterflyChart("dayBillingButterfly", [], [], [], "Avg ACHT", "Daily Volume", "Billing Sub-Reasons", BILLING_ACHT_COLOR, BILLING_VOLUME_COLOR);
-
+    createRadar("reasonRadarmonthly", [], []);
+    createRadar("reasonRadardaily", [], []);
+    createRadar("billingReasonRadarmonthly", [], []);
+    createRadar("billingReasonRadardaily", [], []);
 }
 initEmptyCharts();
 
@@ -625,6 +608,9 @@ function renderAveragesAndMonthPies(){
         return { subReason: r, leftMetric: s.count>0 ? Math.ceil(s.sumAcht / s.count) : 0, rightMetric: Math.ceil(s.count / daysCount) };
     }).sort((a,b)=>b.rightMetric - a.rightMetric).slice(0,10);
     createButterflyChart("monthBillingButterfly", billingDataArr.map(i=>i.subReason), billingDataArr.map(i=>-i.leftMetric), billingDataArr.map(i=>i.rightMetric), "Avg ACHT", "Avg Daily Volume", "Billing Sub-Reasons", BILLING_ACHT_COLOR, BILLING_VOLUME_COLOR);
+
+    createRadar("reasonRadarmonthly", Object.keys(reasonStats), Object.keys(reasonStats).map(r => reasonStats[r].count), "Monthly Volume");
+    createRadar("billingReasonRadarmonthly", Object.keys(billingSubReasonStats), Object.keys(billingSubReasonStats).map(r => billingSubReasonStats[r].count), "Monthly Billing Sub-Reason Volume");
 }
 
 // ---------------------------
@@ -752,8 +738,8 @@ function renderForSelectedDate(){
     }).sort((a,b)=>b.volume - a.volume).slice(0,10);
     createButterflyChart("dayBillingButterfly", billingDayTop.map(i=>i.subReason), billingDayTop.map(i=>-i.acht), billingDayTop.map(i=>i.volume), "Avg ACHT", "Daily Volume", "Daily Billing Sub-Reasons", BILLING_ACHT_COLOR, BILLING_VOLUME_COLOR);
 
-    
-    
+    createRadar("reasonRadardaily", Object.keys(dayReasonStats), Object.keys(dayReasonStats).map(r => dayReasonStats[r].count), "Daily Volume");
+    createRadar("billingReasonRadardaily", Object.keys(dayBillingSubReasonStats), Object.keys(dayBillingSubReasonStats).map(r => dayBillingSubReasonStats[r].count), "Daily Billing Sub-Reason Volume");
 
     renderSpikingReasons();
     renderWorstHourBadge();
@@ -1105,35 +1091,66 @@ function renderSpikingReasons() {
 // ---------------------------
 
 function renderWorstHourBadge() {
-    if (!selectedDate || !groupedData[selectedDate]) {
-        document.getElementById('worstHourBadge').textContent = '— : —';
-        return;
-    }
+    if (!selectedDate || !groupedData[selectedDate]) return;
 
-    const hourly = Array(24).fill(0);
+    const hourlyCalls = Array(24).fill(0);
+    const hourlyReasons = Array(24).fill().map(() => ({})); // { "Slow Speed": 42, ... }
+
     Object.values(groupedData[selectedDate]).forEach(c => {
         const h = parseInt(getHourFromDate(c.call_date));
-        if (!isNaN(h)) hourly[h]++;
+        if (isNaN(h)) return;
+
+        const reason = c["Call Reason"] || "Unknown";
+        hourlyCalls[h]++;
+        hourlyReasons[h][reason] = (hourlyReasons[h][reason] || 0) + 1;
     });
 
-    let max = 0, worst = 0;
+    // Find worst hour
+    let maxCalls = 0, worstHour = 0;
     for (let h = 0; h < 24; h++) {
-        if (hourly[h] > max) { max = hourly[h]; worst = h; }
+        if (hourlyCalls[h] > maxCalls) {
+            maxCalls = hourlyCalls[h];
+            worstHour = h;
+        }
     }
 
-    const start = String(worst).padStart(2, '0');
-    const end = String(worst + 1).padStart(2, '0');
+    // Find top reason in that hour
+    const reasonsInWorstHour = hourlyReasons[worstHour];
+    let topReason = "Unknown";
+    let topCount = 0;
+    for (const [reason, count] of Object.entries(reasonsInWorstHour)) {
+        if (count > topCount) {
+            topReason = reason;
+            topCount = count;
+        }
+    }
+
+    const start = String(worstHour).padStart(2, '0');
+    const end = String(worstHour + 1).padStart(2, '0');
     const badge = document.getElementById('worstHourBadge');
 
     badge.innerHTML = `
-        <div class="text-2xl font-bold">${start}:00</div>
-        <div class="text-sm text-gray-600">${max.toLocaleString()} calls</div>
+        Worst hour: <strong>${start}:00 – ${end}:00</strong><br>
+        <span class="text-lg font-bold">${maxCalls.toLocaleString()} calls</span>
+        ${topCount > 0 ? ` • <span style="color:#dc2626;">${topReason}</span> (${topCount})` : ''}
     `;
 
-    // Optional: color based on severity
-    if (max > 800) badge.className = 'text-red-600';
-    else if (max > 500) badge.className = 'text-orange-600';
-    else badge.className = 'text-gray-900';
+    // Color logic (red = very bad, orange = busy, gray = normal)
+    if (maxCalls > 800) {
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#991b1b';
+        badge.style.borderLeft = '4px solid #ef4444';
+    } else if (maxCalls > 500) {
+        badge.style.background = '#fff7ed';
+        badge.style.color = '#9a3412';
+        badge.style.borderLeft = '4px solid #f97316';
+    } else {
+        badge.style.background = '#f3f4f6';
+        badge.style.color = '#374151';
+        badge.style.borderLeft = '4px solid #6b7280';
+    }
+
+    badge.className = 'px-5 py-4 rounded-xl text-left font-medium shadow-md border';
 }
 // ---------------------------
 // Fetch & Load

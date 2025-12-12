@@ -32,13 +32,12 @@
           <input id="datePicker" placeholder="Select date" class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5" />
         </div>
         <button id="btnReload" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md" aria-label="Reload data">
-          Reload
+          Reset
         </button>
       </div>
     </div>
 
     <!-- KPI ROW -->
-<!-- KPI ROW — Now includes Worst Hour! -->
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
   <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-xl p-4 shadow text-center">
     <div class="text-gray-600 text-sm font-medium">Total Calls</div>
@@ -69,92 +68,88 @@
   </div>
 </div>
 
-    <!-- CHART GRID -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- MAIN GRID: 12-column layout -->
+<!-- MAIN GRID: All 4 top cards have exactly the same height -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <!-- Left: 8 columns -->
+  <div class="lg:col-span-8 grid grid-cols-1 gap-6">
+    <!-- Average Hourly Volume (All Time) -->
+    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Average Hourly Volume (All Time)</h3>
+      <div class="h-80"> <!-- ← This is the magic line -->
+        <canvas id="avgHourlyChart"></canvas>
+      </div>
+    </div>
 
-      <!-- Average Hourly (All Time) -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="font-semibold mb-3">Average Hourly Volume (All Dates)</h3>
-        <div class="chart-container h-72"><canvas id="avgHourlyChart"></canvas></div>
+    <!-- Today's Hourly Volume -->
+    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">
+        Hourly Volume • <span class="date-mirror font-medium"></span>
+      </h3>
+      <div class="h-80"> <!-- ← Same height -->
+        <canvas id="lastDayHourlyChart"></canvas>
       </div>
+    </div>
+  </div>
 
-      <!-- Selected Date Hourly -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="font-semibold mb-3">
-          Hourly Volume 
-          <span id="selectedDateTitle" class="date-mirror"></span>
-        </h3>
-        <div class="chart-container h-72"><canvas id="lastDayHourlyChart"></canvas></div>
+  <!-- Right: 4 columns (pies) -->
+  <div class="lg:col-span-4 grid grid-cols-1 gap-6">
+    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Monthly)</h3>
+      <div class="h-80 flex items-center justify-center"> <!-- ← Same h-80 + centering -->
+        <canvas id="monthRegionPie"></canvas>
       </div>
+    </div>
 
-      <!-- Region Pies -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Monthly Total)</h3>
-        <div class="chart-container h-72"><canvas id="monthRegionPie"></canvas></div>
+    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Today)</h3>
+      <div class="h-80 flex items-center justify-center">
+        <canvas id="lastDayRegionPie"></canvas>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Selected Date)</h3>
-        <div class="chart-container h-72"><canvas id="lastDayRegionPie"></canvas></div>
-      </div>
+    </div>
+  </div>
+</div>
 
-      <!-- FCR Pies -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">FCR vs Non-FCR (Monthly)</h3>
-        <div class="chart-container h-72"><canvas id="monthFCRPie"></canvas></div>
-      </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">FCR vs Non-FCR (Selected Date)</h3>
-        <div class="chart-container h-72"><canvas id="lastDayFCRPie"></canvas></div>
-      </div>
+    <!-- BELOW: Everything stays exactly as you have it -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
       <!-- Butterfly Charts -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs Avg ACHT (Monthly)</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs Avg ACHT (Monthly)</h3>
         <div class="chart-container h-96"><canvas id="monthButterflyChart1"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs ACHT (Selected Date)</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs ACHT (Selected Date)</h3>
         <div class="chart-container h-96"><canvas id="dayButterflyChart"></canvas></div>
       </div>
 
       <!-- Billing Butterfly -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Monthly)</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Monthly)</h3>
         <div class="chart-container h-96"><canvas id="monthBillingButterfly"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Selected Date)</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Selected Date)</h3>
         <div class="chart-container h-96"><canvas id="dayBillingButterfly"></canvas></div>
       </div>
 
       <!-- Trend Charts -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Month-over-Month: Volume vs Average Handle Time</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Month-over-Month: Volume vs Average Handle Time</h3>
         <div class="chart-container h-96"><canvas id="monthOverMonthChart"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">First Call Resolution (FCR%) Trend</h3>
+      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">First Call Resolution (FCR%) Trend</h3>
         <div class="chart-container h-96"><canvas id="fcrTrendChart"></canvas></div>
       </div>
 
-      <!-- Spiking Reasons Alert -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow lg:col-span-2">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Spiking Reasons Today vs 7-Day Average</h3>
-        <div id="spikesContainer" class="flex flex-wrap gap-4 justify-center min-h-20 items-center overflow-auto">
-          <div class="text-gray-500 italic">Loading spikes...</div>
-        </div>
-      </div>
-
-      <!-- Worst Hour Badge -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-4 shadow lg:col-span-2">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">Worst hour</h3>
-        <div id="" class="text-gray-600 text-lg"></div>
+      <!-- Spiking Reasons -->
+      <div class="lg:col-span-2 bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Spiking Reasons Today vs 7-Day Average</h3>
+        <div id="spikesContainer" class="min-h-32"></div>
       </div>
 
     </div>
-
-  </div>
-
   <!-- LIBRARIES -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
