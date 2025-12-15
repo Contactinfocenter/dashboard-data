@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard – New Theme</title>
+  <title>Call Analysis/Region/Urban/Rural </title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,9 +23,6 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     color: #0f172a;
 }
-
-/* Glass-morphism containers */
-/* ←←← ADD / REPLACE THESE LINES ONLY →→→ */
 
 /* Reduce row height for ALL tables */
 .excel-table td,
@@ -203,12 +200,19 @@ canvas {
   <div class="max-w-[1600px] mx-auto">
 
     <div class="text-2xl font-bold tracking-wide">
-        Call Analytics
+        Call Analysis/Region/Urban/Rural
     </div>
-    <div class="text-gray-600 text-sm pb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4">
+    <!-- Left: Overview status -->
+    <div class="text-gray-600 text-sm">
         Overview: <strong id="statusText">Initializing...</strong>
     </div>
-    <div style="font-size:0.8rem; color:#64748b; text-align:right; margin:8px 16px 0 0;">Last updated: <span id="lastUpdated"></span></div>
+    
+    <!-- Right: Last updated -->
+    <div class="text-xs text-gray-500 text-right sm:text-left">
+        Last updated: <span id="lastUpdated"></span>
+    </div>
+    </div>
 
     <!-- REGION SECTION -->
         <section class="mb-10 border-b border-white/40">

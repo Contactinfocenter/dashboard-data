@@ -74,17 +74,17 @@
   <!-- Left: 8 columns -->
   <div class="lg:col-span-8 grid grid-cols-1 gap-6">
     <!-- Average Hourly Volume (All Time) -->
-    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">Average Hourly Volume (All Time)</h3>
+    <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Average Hourly Calls (per Month)</h3>
       <div class="h-80"> <!-- ← This is the magic line -->
         <canvas id="avgHourlyChart"></canvas>
       </div>
     </div>
 
     <!-- Today's Hourly Volume -->
-    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">
-        Hourly Volume • <span class="date-mirror font-medium"></span>
+    <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">
+        Hourly Calls of: <span class="date-mirror font-light"></span>
       </h3>
       <div class="h-80"> <!-- ← Same height -->
         <canvas id="lastDayHourlyChart"></canvas>
@@ -94,15 +94,15 @@
 
   <!-- Right: 4 columns (pies) -->
   <div class="lg:col-span-4 grid grid-cols-1 gap-6">
-    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Monthly)</h3>
+    <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Monthly Calls by Region</h3>
       <div class="h-80 flex items-center justify-center"> <!-- ← Same h-80 + centering -->
         <canvas id="monthRegionPie"></canvas>
       </div>
     </div>
 
-    <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Calls by Region (Today)</h3>
+    <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+      <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Region wise Calls of: <span class="date-mirror font-light"></span></h3>
       <div class="h-80 flex items-center justify-center">
         <canvas id="lastDayRegionPie"></canvas>
       </div>
@@ -114,38 +114,38 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
 
       <!-- Butterfly Charts -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs Avg ACHT (Monthly)</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Top 10 Call Reasons – Volume vs Avg ACHT (Monthly)</h3>
         <div class="chart-container h-96"><canvas id="monthButterflyChart1"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Top 10 Call Reasons – Volume vs ACHT (Selected Date)</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Top 10 Call Reasons – Volume vs ACHT <span class="date-mirror font-light"></span></h3>
         <div class="chart-container h-96"><canvas id="dayButterflyChart"></canvas></div>
       </div>
 
       <!-- Billing Butterfly -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Monthly)</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Billing Sub-Reasons – Volume vs ACHT (Monthly)</h3>
         <div class="chart-container h-96"><canvas id="monthBillingButterfly"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Billing Sub-Reasons – Volume vs ACHT (Selected Date)</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Billing Sub-Reasons – Volume vs ACHT <span class="date-mirror font-light"></span></h3>
         <div class="chart-container h-96"><canvas id="dayBillingButterfly"></canvas></div>
       </div>
 
       <!-- Trend Charts -->
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Month-over-Month: Volume vs Average Handle Time</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Month-over-Month: Volume vs Average Handle Time</h3>
         <div class="chart-container h-96"><canvas id="monthOverMonthChart"></canvas></div>
       </div>
-      <div class="bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">First Call Resolution (FCR%) Trend</h3>
+      <div class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">First Call Resolution (FCR%) Trend</h3>
         <div class="chart-container h-96"><canvas id="fcrTrendChart"></canvas></div>
       </div>
 
       <!-- Spiking Reasons -->
-      <div class="lg:col-span-2 bg-white/40 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Spiking Reasons Today vs 7-Day Average</h3>
+      <div class="lg:col-span-2 bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
+        <h3 class="text-xl font-light tracking-tight text-gray-900 mb-5">Spiking Reasons <span class="date-mirror font-light"></span> vs 7-Day Average</h3>
         <div id="spikesContainer" class="min-h-32"></div>
       </div>
 
@@ -159,7 +159,7 @@
   <!-- Custom Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <script type="module" src="incall2.js"></script>
+  <script type="module" src="home.js"></script>
 
 </body>
 </html>

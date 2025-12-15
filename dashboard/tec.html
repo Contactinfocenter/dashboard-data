@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Call Analysis / Region / Urban / Rural</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Flowbite -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body { 
+      font-family: Inter, system-ui, -apple-system, sans-serif; 
+      background: linear-gradient(to bottom right, #d9e4f5, #f3f8ff);
+      color: #0f172a;
+    }
+
+    /* Card Style — matching home-1/2 */
+    .card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Table Style — clean, modern, matching previous */
+    .excel-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 4px;
+      font-size: 0.9rem;
+    }
+
+    .excel-table thead th {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 12px 10px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .excel-table td {
+      background: #ffffff;
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.2s;
+    }
+
+    .excel-table tbody tr:hover td {
+      background: #e0e7ff;
+    }
+
+    .excel-table tr.grand td {
+      background: #dbeafe !important;
+      font-weight: 700;
+      color: #1e40af;
+    }
+
+    .excel-table tr.repeat td {
+      background: #fee2e2 !important;
+      font-weight: 600;
+      color: #991b1b;
+    }
+
+    .excel-table tr.row-unique td {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    td.zone {
+      text-align: left !important;
+      font-weight: 700;
+      color: #1e40af;
+      font-size: 0.95rem;
+    }
+
+    /* Chips — matching previous */
+    .chip {
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid rgba(79,70,229,0.2);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .chip.selected {
+      background: #4f46e5;
+      color: white;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+
+    .chip:hover:not(.selected) {
+      background: #e0e7ff;
+      transform: translateY(-1px);
+    }
+
+    /* Buttons */
+    .filter-btn {
+      background: #1e293b;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(30,41,59,0.25);
+    }
+
+    .filter-btn:hover {
+      background: #0f172a;
+      transform: translateY(-2px);
+    }
+
+    /* Chart canvas */
+    canvas {
+      border-radius: 16px;
+      background: transparent;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+
+  <div class="max-w-[1800px] mx-auto">
+
+    <header class="sticky top-0 z-50 card mb-8 p-6">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight">Call Analysis / Region / Urban / Rural</h1>
+          <p class="text-slate-600 mt-1">
+            Overview: <strong id="statusText">Initializing...</strong>
+          </p>
+        </div>
+        <p class="text-sm text-slate-500">
+          Last updated: <span id="lastUpdated"></span>
+        </p>
+      </div>
+    </header>
+
+    <!-- REGION SECTION -->
+    <section class="mb-12">
+      <div class="card mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h2 class="text-2xl font-bold text-slate-800">Call Volume by Region</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap gap-2" id="regionChips"></div>
+            <button id="clearFiltersBtn" class="filter-btn">Clear Filters</button>
+            <input type="text" id="mainDateRange" placeholder="Select Date Range" class="px-4 py-2 bg-white/50 border border-white/40 rounded-lg" />
+            <button id="clearMainDateBtn" class="filter-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-6">
+          <div class="card">
+            <div id="summaryTableContainer">
+              <p class="text-center text-gray-600 py-8">Loading summary data...</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <canvas id="barChart" class="h-96"></canvas>
+          </div>
+
+          <div id="quickStats" class="flex flex-wrap gap-4 text-sm"></div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="card sticky top-24">
+            <h3 class="font-bold text-slate-800 mb-4">Call Reason</h3>
+            <div id="reasonChips" class="flex flex-wrap gap-2 max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- URBAN ZONE SECTION -->
+    <section class="mb-12">
+      <div class="card mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h2 class="text-2xl font-bold text-slate-800">Urban Zone Analysis</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap gap-2" id="zoneChips"></div>
+            <button id="clearZoneFiltersBtn" class="filter-btn">Clear Filters</button>
+            <input type="text" id="zoneDateRange" placeholder="Select Date Range" class="px-4 py-2 bg-white/50 border border-white/40 rounded-lg" />
+            <button id="clearZoneDateBtn" class="filter-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-6">
+          <div class="card">
+            <div id="zoneSummaryTableContainer">
+              <p class="text-center text-gray-600 py-8">Loading zone summary data...</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <canvas id="zoneBarChart" class="h-96"></canvas>
+          </div>
+
+          <div id="zoneQuickStats" class="flex flex-wrap gap-4 text-sm"></div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="card sticky top-24">
+            <h3 class="font-bold text-slate-800 mb-4">Call Reason</h3>
+            <div id="zoneReasonChips" class="flex flex-wrap gap-2 max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RURAL SECTION -->
+    <section class="mb-12">
+      <div class="card mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h2 class="text-2xl font-bold text-slate-800">Rural Top 20 Zone Analysis</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <input type="text" id="ruralDateRange" placeholder="Select Date Range" class="px-4 py-2 bg-white/50 border border-white/40 rounded-lg" />
+            <button id="clearRuralDateBtn" class="filter-btn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-6">
+          <div class="card">
+            <div id="ruralSummaryTableContainer">
+              <p class="text-center text-gray-600 py-8">Loading rural summary data...</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <canvas id="ruralZoneBarChart" class="h-96"></canvas>
+          </div>
+
+          <div id="ruralZoneQuickStats" class="flex flex-wrap gap-4 text-sm"></div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="card sticky top-24">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-slate-800">Call Reason</h3>
+              <button id="clearRuralFiltersBtn" class="filter-btn text-sm">Clear</button>
+            </div>
+            <div id="ruralZoneReasonChips" class="flex flex-wrap gap-2 max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+  <script src="script.js"></script>
+  <script type="module" src="./app-b-git.js"></script>
+</body>
+</html>
