@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Call Analysis / Region / Urban / Rural</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Flowbite -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body {
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    /* Premium Glassmorphism Card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Segmented Header - Phoenix-inspired */
+    .segmented-header {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(to right, #eff6ff, #3b82f6);
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    }
+
+    .segment-title {
+      padding: 1.25rem 2rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.7);
+      border-right: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .segment-tabs {
+      display: flex;
+      flex: 1;
+    }
+
+    .segment-tab {
+      padding: 1.25rem 2rem;
+      font-weight: 600;
+      color: white;
+      text-align: center;
+      flex: 1;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .segment-tab:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .segment-tab.active {
+      background: rgba(255, 255, 255, 0.25);
+      font-weight: 700;
+    }
+
+    /* Angled divider between tabs */
+    .segment-tab:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(135deg, transparent 50%, currentColor 50%);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+
+    .segment-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+
+    .filter-input {
+      padding: 0.75rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      background: white;
+      min-width: 220px;
+    }
+
+    /* Table & other styles remain the same as before */
+    .excel-table thead th {
+      background: #64748b;
+      color: #ffffff;
+      padding: 14px 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    canvas {
+      border-radius: 16px;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+
+  <div class="max-w-[1900px] mx-auto">
+
+    <!-- Main Header -->
+    <header class="glass-card mb-10 p-8">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div>
+          <h1 class="text-4xl font-bold tracking-tight text-slate-800">Call Analysis Dashboard</h1>
+          <p class="text-lg text-slate-600 mt-2">
+            Overview: <strong id="statusText">Initializing...</strong>
+          </p>
+        </div>
+        <p class="text-base text-slate-500">
+          Last updated: <span id="lastUpdated"></span>
+        </p>
+      </div>
+    </header>
+
+    <!-- REGION SECTION with Segmented Header -->
+    <section class="mb-16">
+      <div class="segmented-header mb-8">
+        <div class="segment-title">Call Volume by Region</div>
+        <div class="segment-tabs">
+          <div class="segment-tab active" data-view="urban">Urban</div>
+          <div class="segment-tab" data-view="rural">Rural</div>
+          <div class="segment-tab" data-view="na">N/A</div>
+          <div class="segment-tab btn-danger" id="clearFiltersBtn">Clear Filters</div>
+        </div>
+        <div class="segment-actions">
+          <input type="text" id="mainDateRange" placeholder="Select Date Range" class="filter-input" />
+          <button id="clearMainDateBtn" class="btn-primary">Clear</button>
+        </div>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <div class="xl:col-span-9 space-y-8">
+          <div class="glass-card overflow-x-auto p-6">
+            <div id="summaryTableContainer">
+              <p class="text-center text-gray-600 py-16">Loading summary data...</p>
+            </div>
+          </div>
+
+          <div class="glass-card p-8">
+            <canvas id="barChart" class="max-h-96"></canvas>
+          </div>
+
+          <div id="quickStats" class="flex flex-wrap gap-6 text-base text-slate-700"></div>
+        </div>
+
+        <div class="xl:col-span-3">
+          <div class="glass-card sticky top-24 p-8">
+            <h3 class="text-2xl font-bold text-slate-800 mb-6">Call Reason</h3>
+            <div id="reasonChips" class="flex flex-wrap gap-3 max-h-96 overflow-y-auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Repeat the same segmented header pattern for Urban and Rural sections if needed -->
+    <!-- Or keep separate headers — your choice. This one is for Region as per your screenshot -->
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+  <script type="module" src="./app-b-git.js"></script>
+
+  <!-- Optional: Tab switching logic -->
+  <script>
+    document.querySelectorAll('.segment-tab[data-view]').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.segment-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        // Add your view switching logic here if needed
+      });
+    });
+  </script>
+</body>
+</html>

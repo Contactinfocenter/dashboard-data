@@ -24,45 +24,33 @@
     color: #0f172a;
 }
 
-/* Reduce row height for ALL tables */
+/* Reduce row height and improve readability for ALL tables */
 .excel-table td,
 .excel-table th {
-    padding: 6px 8px !important;     /* was 10px–12px → now 6px */
-    line-height: 1.3 !important;     /* tighter line spacing */
-    font-size: 0.86rem !important;   /* slightly smaller text (optional) */
+    padding: 6px 8px !important;
+    line-height: 1.3 !important;
+    font-size: 0.86rem !important;
 }
 
-/* Special rows (Grand Total, Repeat, Unique) – keep them readable */
+/* Slightly more space for important rows */
 .excel-table tr.grand td,
 .excel-table tr.repeat td,
 .excel-table tr.row-unique td {
-    padding: 7px 8px !important;     /* slightly more breathing room for important rows */
+    padding: 7px 8px !important;
 }
 
-.table-wrapper {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 1.25rem;
-    padding: 1.25rem;
-    border: 1px solid rgba(255,255,255,0.6);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-/* Main table */
+/* Main table – minimal styling only */
 .excel-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.92rem;
-    border-radius: 1rem;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
+/* Table header – slate, sticky, rounded top corners */
 .excel-table thead th {
-    background: #1e293b;                 /* Modern slate instead of dark blue */
-    color: #e2e8f0;
+    background: #64748b;
+    color: #ffffff;
     padding: 12px 8px;
     font-weight: 600;
     text-align: center;
@@ -72,37 +60,36 @@
     top: 0;
     z-index: 10;
 }
+.excel-table thead th:first-child { border-top-left-radius: 12px; }
+.excel-table thead th:last-child { border-top-right-radius: 12px; }
 
+/* Table cells */
 .excel-table td {
-    padding: 10px 8px;
     text-align: center;
     border-bottom: 1px solid #e2e8f0;
     background: #ffffff;
     transition: background 0.2s;
 }
-
 .excel-table tbody tr:nth-child(even) { background: #f8fafc; }
 .excel-table tbody tr:hover { background: #e0e7ff; }
 
-/* Key rows – hierarchy that instantly draws the eye */
+/* Key rows */
 .excel-table tr.grand {
-    background: #dbeafe !important;      /* Soft blue instead of yellow */
+    background: #dbeafe !important;
     font-weight: 700;
     color: #1e40af;
 }
-
 .excel-table tr.repeat {
-    background: #fee2e2 !important;      /* Soft red for repeat % – your #1 KPI */
+    background: #fee2e2 !important;
     font-weight: 600;
     color: #991b1b;
 }
-
-.excel-table tr.row-unique { 
-    color: #64748b; 
+.excel-table tr.row-unique {
+    color: #64748b;
     font-style: italic;
 }
 
-/* Zone / Region names */
+/* Region/Zone names */
 td.zone {
     text-align: left !important;
     font-weight: 700;
@@ -110,7 +97,14 @@ td.zone {
     font-size: 0.95rem;
 }
 
-/* Chips – already gorgeous, just tiny polish */
+#summaryTableContainer,
+#zoneSummaryTableContainer,
+#ruralSummaryTableContainer {
+    overflow: hidden;
+    border-radius: 16px; /* or keep rounded-2xl in HTML */
+}
+
+/* Base chip style (used by reason chips and as fallback) */
 .chip {
     padding: 6px 12px;
     font-size: 0.82rem;
@@ -121,13 +115,11 @@ td.zone {
     border: 1px solid rgba(79,70,229,0.2);
     transition: all 0.2s ease;
 }
-
 .chip.off {
     background: #f1f5f9;
     color: #64748b;
     border-color: #cbd5e1;
 }
-
 .chip.selected {
     background: #4f46e5;
     color: white;
@@ -135,10 +127,57 @@ td.zone {
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
     font-weight: 600;
 }
-
 .chip:hover:not(.selected) {
     background: #e0e7ff;
     transform: translateY(-1px);
+}
+
+/* Reason chips only – tiny & compact */
+#reasonChips .chip,
+#zoneReasonChips .chip,
+#ruralZoneReasonChips .chip {
+    padding: 4px 9px !important;
+    font-size: 0.78rem !important;
+    line-height: 1 !important;
+    min-height: 24px !important;
+    height: 26px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#regionChips {
+    gap: 16px;  /* more breathing room */
+}
+
+#regionChips .chip {
+    padding: 10px 28px !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    min-height: 48px !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+/* Off/Inactive – very light blue */
+#regionChips .chip.off {
+    background: #eff6ff !important;  /* softer light blue */
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+/* Selected/Active – solid medium blue */
+#regionChips .chip.selected {
+    background: #3b82f6 !important;  /* blue-500 solid */
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
+}
+
+/* Hover lift */
+#regionChips .chip:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
 
 /* Buttons */
@@ -146,52 +185,46 @@ td.zone {
     background: #1e293b;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 999px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     transition: all 0.2s;
     box-shadow: 0 4px 12px rgba(30,41,59,0.25);
 }
-
 .filter-btn:hover {
     background: #0f172a;
     transform: translateY(-2px);
 }
 
-/* Chart container polish */
+/* Date input */
+.filter-input {
+    padding: 10px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.filter-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3);
+}
+
+/* Chart */
 canvas {
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    background: transparent; /* or rgba(0, 0, 0, 0) */
-
+    background: transparent;
 }
 
-/* Small nice touches */
-.slicer-title {
-    color: #1e293b;
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-}
-
-#reasonChips .chip,
-#zoneReasonChips .chip,
-#ruralZoneReasonChips .chip {
-    padding: 4px 9px !important;     /* was ~6–8px → now tiny */
-    font-size: 0.78rem !important;   /* slightly smaller text */
-    line-height: 1 !important;
-    min-height: 24px !important;     /* forces exact height */
-    height: 26px !important;         /* perfect compact height */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Responsive fix for very small screens */
+/* Mobile fixes */
 @media (max-width: 768px) {
     .excel-table { font-size: 0.8rem; }
     .chip { padding: 4px 8px; font-size: 0.78rem; }
+    #regionChips { gap: 8px; }
+    #regionChips .chip { padding: 8px 18px !important; font-size: 0.85rem !important; }
 }
   </style>
 </head>
@@ -199,9 +232,9 @@ canvas {
 
   <div class="max-w-[1600px] mx-auto">
 
-    <div class="text-2xl font-bold tracking-wide">
-        Call Analysis/Region/Urban/Rural
-    </div>
+    <h1 class="text-2xl font-light tracking-widest text-[#1e293b]">
+        Call Analysis: Region, Urban & Rural Zones
+    </h1>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4">
     <!-- Left: Overview status -->
     <div class="text-gray-600 text-sm">
@@ -209,7 +242,7 @@ canvas {
     </div>
     
     <!-- Right: Last updated -->
-    <div class="text-xs text-gray-500 text-right sm:text-left">
+    <div class="text-xs text-gray-600 text-right sm:text-left">
         Last updated: <span id="lastUpdated"></span>
     </div>
     </div>
@@ -219,30 +252,51 @@ canvas {
 
                 <header class="sticky top-0 z-50 bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-8">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <h2 class="text-xl font-bold text-[#004c99]">Call Volume by Region</h2>
+      <!-- Title -->
+      <h2 class="text-xl font-light tracking-widest text-[#1e293b] whitespace-nowrap">
+        Call Volume by Region
+      </h2>
 
-                            <div class="flex flex-wrap items-center gap-3">
-                                <!-- Region Chips -->
-                                <div class="flex flex-wrap gap-2" id="regionChips"></div>
+      <!-- Region Chips -->
+      <div
+        id="regionChips"
+        class="flex flex-wrap gap-2 md:flex-1 md:justify-center md:flex-nowrap md:overflow-x-auto">
+      </div>
 
-                                <!-- Filters -->
-                                <button id="clearFiltersBtn" class="filter-btn">Clear Filters</button>
+      <!-- Clear Filters -->
+      <button
+        id="clearFiltersBtn"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md">
+        Clear Filters
+      </button>
 
-                                <input type="text" 
-                                    id="mainDateRange" 
-                                    placeholder="Select Date Range" 
-                                    class="filter-input" />
+      <!-- Date + Reset -->
+      <div class="flex items-center gap-4 whitespace-nowrap">
+        <div class="flex items-center">
+          <span class="mr-2">📅</span>
+          <input
+            id="mainDateRange"
+            placeholder="Select date"
+            class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5"
+          />
+        </div>
 
-                                <button id="clearMainDateBtn" class="filter-btn">Clear</button>
-                            </div>
+        <button
+          id="clearMainDateBtn"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md"
+          aria-label="Reload data">
+          Reset
+        </button>
+      </div>
 
                     </div>
                 </header>      
 
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="col-span-3 space-y-6">
-                <div id="summaryTableContainer">
+                <div id="summaryTableContainer" class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
                     <p class="text-center text-gray-600">Loading summary data...</p>
+                    <!-- summary table will go here once loaded -->
                 </div>
 
                 <div class="bg-white/70 p-6 rounded-xl shadow h-80 flex items-center justify-center">
@@ -365,8 +419,7 @@ canvas {
   <!-- Flowbite JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
     <!-- Custom Scripts -->
-  <script src="script.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
 
   <!-- app module (ES module) -->
   <script type="module" src="./app-b-git.js"></script>

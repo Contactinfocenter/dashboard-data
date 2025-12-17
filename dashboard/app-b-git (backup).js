@@ -192,91 +192,39 @@ const valueLabelPlugin = {
 function createOrUpdateChart(labels, totalData, uniqueData, canvas) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
     const data = {
         labels,
         datasets: [
-            {
-                label: 'Total Calls',
-                data: totalData,
-                backgroundColor: '#3d7fff',           // Soft blue
-                borderColor: '#3b82f6',
-                borderRadius: 0,
-                borderSkipped: false,
-                barThickness: 32
-            },
-            {
-                label: 'Unique Calls',
-                data: uniqueData,
-                backgroundColor: '#6d8196',           // Soft orange
-                borderColor: '#f59e0b',
-                borderRadius: 0,
-                borderSkipped: false,
-                barThickness: 32
-            }
+            { label: 'Total Calls', data: totalData, backgroundColor: '#004c99' },
+            { label: 'Unique Calls', data: uniqueData, backgroundColor: '#f39c12' }
         ]
     };
-
-    const modernOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-            legend: { 
-                position: 'top',
-                labels: {
-                    font: { size: 13, weight: '600' },
-                    padding: 20,
-                    usePointStyle: true,
-                    pointStyle: 'rectRounded'
-                }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.97)',
-                titleColor: '#0f172a',
-                bodyColor: '#0f172a',
-                borderColor: '#e2e8f0',
-                borderWidth: 1.5,
-                cornerRadius: 16,
-                displayColors: true,
-                padding: 16,
-                titleFont: { size: 15, weight: 'bold' },
-                bodyFont: { size: 14 },
-                caretPadding: 12,
-                boxPadding: 8
-            }
-        },
-        scales: {
-            x: {
-                grid: { display: false },
-                ticks: { color: '#64748b', font: { size: 12 } }
-            },
-            y: {
-                grid: { display: false },
-                ticks: { color: '#64748b', font: { size: 12 } },
-                beginAtZero: true
-            }
-        },
-        animation: {
-            duration: 1200
-        }
-    };
-
+    
     let chartInstance;
     if (canvas.id === 'barChart') chartInstance = chart;
     else if (canvas.id === 'zoneBarChart') chartInstance = zoneChart;
     else if (canvas.id === 'ruralZoneBarChart') chartInstance = ruralZoneChart;
 
+    const suggested = totalData.length ? Math.max(...totalData) * 1.15 : undefined;
+
     if (chartInstance) {
         chartInstance.data = data;
-        chartInstance.options = modernOptions;
+        if (!isNaN(suggested)) chartInstance.options.scales.y.suggestedMax = suggested;
         chartInstance.update();
     } else {
         const newChart = new Chart(ctx, {
             type: 'bar',
             data,
-            options: modernOptions,
-            plugins: [valueLabelPlugin]  // Keep your value labels on top
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } }, 
+                    x: { grid: { display: false } } 
+                },
+                plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false } }
+            },
+            plugins: [valueLabelPlugin]
         });
         if (canvas.id === 'barChart') chart = newChart;
         else if (canvas.id === 'zoneBarChart') zoneChart = newChart;
@@ -582,7 +530,7 @@ function render() {
             return new Date(y, parseInt(m) - 1, day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
         });
 
-        let html = `<div class="overflow-x-auto -mx-6"><table class="excel-table w-full"><thead><tr>
+        let html = `<div style="overflow:auto"><table class="excel-table"><thead><tr>
             <th>Total Call</th>
             <th>Type</th>
             <th>Client Base</th>
