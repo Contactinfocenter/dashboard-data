@@ -582,7 +582,7 @@ function render() {
             return new Date(y, parseInt(m) - 1, day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
         });
 
-        let html = `<div class="overflow-x-auto -mx-6"><table class="excel-table w-full"><thead><tr>
+        let html = `<div class="overflow:auto"><table class="excel-table"><thead><tr>
             <th>Total Call</th>
             <th>Type</th>
             <th>Client Base</th>
@@ -714,6 +714,9 @@ function render() {
 
     updateChipVisuals();
 }
+
+
+
 // --- Update Page Title with Date Range ---
 function updatePageTitle() {
     let title = "Call Analytics";

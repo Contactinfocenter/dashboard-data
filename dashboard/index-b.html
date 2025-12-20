@@ -105,80 +105,57 @@ td.zone {
 }
 
 /* Base chip style (used by reason chips and as fallback) */
-.chip {
-    padding: 6px 12px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    border-radius: 8px;
-    background: #eef2ff;
-    color: #4338ca;
-    border: 1px solid rgba(79,70,229,0.2);
-    transition: all 0.2s ease;
-}
-.chip.off {
-    background: #f1f5f9;
-    color: #64748b;
-    border-color: #cbd5e1;
-}
-.chip.selected {
-    background: #4f46e5;
-    color: white;
-    border-color: #4338ca;
-    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
-    font-weight: 600;
-}
-.chip:hover:not(.selected) {
-    background: #e0e7ff;
-    transform: translateY(-1px);
+/* Reason Chips - Soft Rounded Pills */
+#reasonChips .chip {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Reason chips only – tiny & compact */
-#reasonChips .chip,
-#zoneReasonChips .chip,
-#ruralZoneReasonChips .chip {
-    padding: 4px 9px !important;
-    font-size: 0.78rem !important;
-    line-height: 1 !important;
-    min-height: 24px !important;
-    height: 26px !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+#reasonChips .chip:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  color: #1e293b;
 }
 
-#regionChips {
-    gap: 16px;  /* more breathing room */
+#reasonChips .chip.selected {
+  background: #4f46e5;
+  color: white;
+  border-color: #4f46e5;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
 }
 
+/* Region Chips - Underline Touching Text */
 #regionChips .chip {
-    padding: 10px 28px !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    min-height: 48px !important;
-    border-radius: 9999px !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  padding: 12px 0 1px 0; /* Top padding for spacing, bottom for underline */
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  border-bottom: 3px solid transparent; /* Invisible border for consistent spacing */
 }
 
-/* Off/Inactive – very light blue */
-#regionChips .chip.off {
-    background: #eff6ff !important;  /* softer light blue */
-    color: #1e40af !important;
-    border: 1px solid #bfdbfe !important;
-}
-
-/* Selected/Active – solid medium blue */
-#regionChips .chip.selected {
-    background: #3b82f6 !important;  /* blue-500 solid */
-    color: white !important;
-    border: none !important;
-    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
-}
-
-/* Hover lift */
 #regionChips .chip:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  color: #4f46e5;
 }
+
+#regionChips .chip.selected {
+  color: #4f46e5;
+  font-weight: 600;
+  border-bottom: 3px solid #6366f1; /* Underline touching text */
+  border-radius: 2px;
+}
+
 
 /* Buttons */
 .filter-btn {
@@ -250,70 +227,59 @@ canvas {
     <!-- REGION SECTION -->
         <section class="mb-10 border-b border-white/40">
 
-                <header class="sticky top-0 z-50 bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-8">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-      <!-- Title -->
-      <h2 class="text-xl font-light tracking-widest text-[#1e293b] whitespace-nowrap">
-        Call Volume by Region
-      </h2>
+<header class="sticky top-0 z-50 bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-8">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- Title -->
+        <h2 class="text-xl font-light tracking-widest text-[#1e293b] whitespace-nowrap">
+            Call Volume by Region
+        </h2>
 
-      <!-- Region Chips -->
-      <div
-        id="regionChips"
-        class="flex flex-wrap gap-2 md:flex-1 md:justify-center md:flex-nowrap md:overflow-x-auto">
-      </div>
-
-      <!-- Clear Filters -->
-      <button
-        id="clearFiltersBtn"
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md">
-        Clear Filters
-      </button>
-
-      <!-- Date + Reset -->
-      <div class="flex items-center gap-4 whitespace-nowrap">
-        <div class="flex items-center">
-          <span class="mr-2">📅</span>
-          <input
-            id="mainDateRange"
-            placeholder="Select date"
-            class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5"
-          />
+        <!-- Region Chips - Plain with Underline Only -->
+        <div id="regionChips" class="flex items-center gap-8 flex-1 justify-center">
+            <!-- Chips injected by JS -->
         </div>
 
-        <button
-          id="clearMainDateBtn"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md"
-          aria-label="Reload data">
-          Reset
+        <!-- Clear Filters -->
+        <button id="clearFiltersBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md">
+            Clear Filters
         </button>
-      </div>
 
-                    </div>
-                </header>      
-
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div class="col-span-3 space-y-6">
-                <div id="summaryTableContainer" class="bg-white/70 backdrop-blur-xl border border-white/40 rounded-2xl p-6 shadow">
-                    <p class="text-center text-gray-600">Loading summary data...</p>
-                    <!-- summary table will go here once loaded -->
-                </div>
-
-                <div class="bg-white/70 p-6 rounded-xl shadow h-80 flex items-center justify-center">
-                    <canvas id="barChart"></canvas>
-                </div>
-
-                <div id="quickStats" class="flex gap-6 text-sm text-gray-700"></div>
-                </div>
-
-                <div class="space-y-6 sticky top-24 self-start">
-                    <div class="bg-white/70 p-5 rounded-xl shadow">
-                        <h3 class="font-bold text-[#004c99] mb-3">Call Reason</h3>
-                        <div id="reasonChips" class="flex flex-wrap gap-2 max-h-[500px] overflow-y-auto"></div>
-                    </div>
-                </div>
-
+        <!-- Date + Reset -->
+        <div class="flex items-center gap-4 whitespace-nowrap">
+            <div class="flex items-center">
+                <span class="mr-2">📅</span>
+                <input id="mainDateRange" placeholder="Select date" class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5" />
             </div>
+
+            <button id="clearMainDateBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md" aria-label="Reload data">
+                Reset
+            </button>
+        </div>
+    </div>
+</header>      
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="col-span-3 space-y-6">
+                    <div id="summaryTableContainer">
+                        <p class="text-center text-gray-600">Loading summary data...</p>
+                        <!-- summary table will go here once loaded -->
+                    </div>
+
+                    <div class="bg-white/70 p-6 rounded-xl shadow h-80 flex items-center justify-center">
+                        <canvas id="barChart"></canvas>
+                    </div>
+
+                    <div id="quickStats" class="flex gap-6 text-sm text-gray-700"></div>
+                    </div>
+
+                    <div class="space-y-6 sticky top-24 self-start">
+                        <div class="bg-white/70 p-5 rounded-xl shadow">
+                            <h3 class="font-bold text-[#004c99] mb-3">Call Reason</h3>
+                            <div id="reasonChips" class="flex flex-wrap gap-2 max-h-[500px] overflow-y-auto"></div>
+                        </div>
+                    </div>
+
+                </div>
 
         </section>
 
