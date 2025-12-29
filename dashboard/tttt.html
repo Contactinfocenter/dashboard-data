@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agent Performance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
+    body { font-family: 'Nunito Sans', sans-serif; background-color: #f9fafd; color: #384457; }
+
+    .phoenix-card {
+      background: #ffffff;
+      border: 1px solid #e3e6ed;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.05);
+    }
+
+    h1 { font-size: 1.85rem !important; font-weight: 800; color: #012970; }
+    h2 { font-size: 1.35rem !important; font-weight: 700; color: #012970; margin-bottom: 1rem; border-bottom: 2px solid #e3e6ed; padding-bottom: 0.75rem; }
+
+    /* Tab Buttons */
+    .tab-btn {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+      font-weight: 600;
+      color: #4b5563;
+      transition: all 0.2s ease;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .tab-btn:hover {
+      background-color: #f3f4f6;
+    }
+    .tab-btn.active {
+      color: #1d4ed8;
+      border-bottom-width: 4px;
+      border-color: #1d4ed8;
+      background-color: #eff6ff;
+    }
+
+    /* Agent Chips */
+    .agent-chip {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+    .agent-chip:hover {
+      background-color: #e2e8f0;
+    }
+    .agent-chip.active {
+      background-color: #2563eb;
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6 lg:p-8">
+  <div id="loadingOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-white opacity-90">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+  </div>
+
+  <div class="max-w-[1600px] mx-auto">
+    <!-- Header -->
+    <header class="mb-10 flex flex-col md:flex-row justify-between items-center bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+      <div>
+        <h1 class="text-3xl font-bold text-blue-900">Agent Performance Dashboard</h1>
+        <p class="text-gray-600 mt-2">Data for: <span id="selectedDate" class="font-bold text-blue-800">—</span></p>
+      </div>
+      <div class="flex items-center gap-4 mt-4 md:mt-0">
+        <input type="text" id="datePicker" placeholder="Select Date" class="px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" readonly />
+        <button id="btnReload" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow">
+          Reload
+        </button>
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+      <div class="phoenix-card text-center">
+        <p class="text-gray-600 text-sm">Total Calls</p>
+        <p class="text-3xl font-bold text-blue-600 mt-2" id="kpiTotalCalls">0</p>
+      </div>
+      <div class="phoenix-card text-center">
+        <p class="text-gray-600 text-sm">Active Agents</p>
+        <p class="text-3xl font-bold text-emerald-600 mt-2" id="kpiActiveAgents">0</p>
+      </div>
+      <div class="phoenix-card text-center">
+        <p class="text-gray-600 text-sm">Top Performer</p>
+        <p class="text-2xl font-bold text-purple-600 mt-2" id="kpiTopAgent">—</p>
+      </div>
+      <div class="phoenix-card text-center">
+        <p class="text-gray-600 text-sm">Avg Handle Time</p>
+        <p class="text-3xl font-bold text-orange-600 mt-2" id="kpiAvgAHT">0s</p>
+      </div>
+      <div class="phoenix-card text-center">
+        <p class="text-gray-600 text-sm">Avg Repeat %</p>
+        <p class="text-3xl font-bold text-red-600 mt-2" id="kpiRepeatPct">0%</p>
+      </div>
+    </div>
+
+    <!-- Hourly Volume Comparison -->
+    <div class="phoenix-card mb-10">
+      <h2>Hourly Call Volume Comparison</h2>
+      <div class="h-[400px]" id="avgHourlyChart"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="phoenix-card">
+      <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
+        <button class="tab-btn active" data-tab="aht">AHT & Hourly Analysis</button>
+        <button class="tab-btn" data-tab="volume">Volume Comparison</button>
+        <button class="tab-btn" data-tab="talktime">Talk Time Comparison</button>
+        <button class="tab-btn" data-tab="login">Login Summary</button>
+        <button class="tab-btn" data-tab="repeat">Repeat Caller Rate</button>
+        <button class="tab-btn" data-tab="leader">Agent Leaderboard</button>
+        <button class="tab-btn" data-tab="summary">Call Summary Table</button>
+      </div>
+
+      <div id="tabsContent">
+        <!-- AHT Tab -->
+        <div class="tab-panel" data-panel="aht">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Select Agents</h3>
+                <div id="agentChipContainer" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">AHT Heatmap (Avg ACHT per Hour)</h3>
+                <div class="h-[500px]" id="ahtHeatmapCanvas"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Volume Comparison Tab -->
+        <div class="tab-panel hidden" data-panel="volume">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Select Agents</h3>
+                <div id="agentChipContainerVolume" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Agent vs System Hourly Volume – <span id="volumeChartDate"></span></h3>
+                <div class="h-[500px]" id="agentVsSystemHourlyCanvas"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Talk Time Tab -->
+        <div class="tab-panel hidden" data-panel="talktime">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Select Agents</h3>
+                <div id="agentChipContainerTalkTime" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Agent Talk Time vs Team Total – <span id="talkTimeChartDate"></span></h3>
+                <div class="h-[500px]" id="talkTimeComparisonChart"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Login Summary Tab -->
+        <div class="tab-panel hidden" data-panel="login">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Login Summary (First/Last Call)</h3>
+                <div id="loginSummaryContainer" class="overflow-x-auto max-h-[600px]"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Info</h3>
+                <p class="text-sm text-gray-600">Login/logout times inferred from first and last call of the day.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Repeat Caller Rate Tab -->
+        <div class="tab-panel hidden" data-panel="repeat">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Repeat Caller Rate per Agent</h3>
+                <div class="h-[500px]" id="repeatRateChart"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Method</h3>
+                <p class="text-sm text-gray-600">Repeat rate = (callers with >1 call) / (total unique callers)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div class="tab-panel hidden" data-panel="leader">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-9">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Agent Leaderboard</h3>
+                <div id="leaderboardContainer" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-3">
+              <div class="phoenix-card">
+                <h3 class="font-bold text-blue-900 mb-4">Wallboard View</h3>
+                <p class="text-sm text-gray-600">Top agents ranked by total calls handled.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call Summary Table Tab -->
+        <div class="tab-panel hidden" data-panel="summary">
+          <div class="phoenix-card">
+            <h3 class="font-bold text-blue-900 mb-4">Call Summary Table (Per Agent)</h3>
+            <div id="callSummaryTable" class="overflow-x-auto max-h-[600px]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
+
+    let rawData = {};
+    let agentList = [];
+    let agentStats = {};
+    let selectedDate = null;
+    let currentSelectedAgent = null;
+
+    const chartInstances = {
+      avgHourlyChart: null,
+      ahtHeatmapCanvas: null,
+      agentVsSystemHourlyCanvas: null,
+      talkTimeComparisonChart: null,
+      repeatRateChart: null
+    };
+
+    function safeNum(v) { return Number.isFinite(Number(v)) ? Number(v) : 0; }
+
+    function formatSecondsToMinutes(totalSeconds) {
+      if (!totalSeconds || totalSeconds < 0) return "0:00";
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.round(totalSeconds % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function getHourFromDate(dateStr) {
+      const d = new Date(dateStr);
+      return isNaN(d) ? "00" : String(d.getHours()).padStart(2, '0');
+    }
+
+    async function loadDataFromGitHub() {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+      try {
+        const res = await fetch(MASTER_DATA_URL + '?t=' + Date.now());
+        const json = await res.json();
+        rawData = json.calls || {};
+        processRawData(rawData);
+      } catch (err) {
+        console.error("Failed to load data", err);
+        alert("Failed to load data");
+      } finally {
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+      }
+    }
+
+    function processRawData(data) {
+      rawData = data || {};
+      agentStats = {};
+      for (const dateKey in rawData) {
+        const calls = rawData[dateKey] || {};
+        for (const callId in calls) {
+          const call = calls[callId];
+          if (!call) continue;
+          const agent = (call.full_name || "Unknown").trim();
+          const phone = call.phone_number || null;
+          const status = call.status || "";
+          const acht = safeNum(call.acht);
+          const callDate = call.call_date ? new Date(call.call_date) : null;
+
+          if (!agentStats[agent]) {
+            agentStats[agent] = {
+              total: 0, fcr: 0, nonFcr: 0, ahtSum: 0,
+              uniqueCallers: new Set(),
+              callerCounts: {},
+              hourly: Array(24).fill().map(() => []),
+              firstPerDay: {}, lastPerDay: {}
+            };
+          }
+
+          const s = agentStats[agent];
+          s.total++;
+          s.ahtSum += acht;
+          if (status === "FCR") s.fcr++; else s.nonFcr++;
+          if (phone) {
+            s.uniqueCallers.add(phone);
+            s.callerCounts[phone] = (s.callerCounts[phone] || 0) + 1;
+          }
+          if (callDate && !isNaN(callDate)) {
+            const hr = callDate.getHours();
+            s.hourly[hr].push(acht);
+            const dStr = callDate.toISOString().slice(0, 10);
+            if (!s.firstPerDay[dStr] || callDate < s.firstPerDay[dStr]) s.firstPerDay[dStr] = callDate;
+            if (!s.lastPerDay[dStr] || callDate > s.lastPerDay[dStr]) s.lastPerDay[dStr] = callDate;
+          }
+        }
+      }
+
+      agentList = Object.keys(agentStats).sort((a, b) => a.localeCompare(b));
+      const dates = Object.keys(rawData)
+  .filter(d => /^\d{4}-\d{1,2}-\d{1,2}$/.test(d)) // safety filter
+  .sort((a, b) => new Date(b) - new Date(a)); // newest first
+
+selectedDate = dates[0] || new Date().toISOString().split('T')[0];
+
+      document.getElementById('selectedDate').textContent = selectedDate;
+      document.getElementById('volumeChartDate').textContent = selectedDate;
+      document.getElementById('talkTimeChartDate').textContent = selectedDate;
+      fp.setDate(selectedDate);
+
+      renderKPIs();
+      renderAgentChips();
+      renderAllChartsAndTables();
+    }
+
+    function renderKPIs() {
+      const totalCalls = Object.values(agentStats).reduce((a, s) => a + s.total, 0);
+      const activeAgents = agentList.length;
+      const avgAht = totalCalls ? Math.round(Object.values(agentStats).reduce((a, s) => a + s.ahtSum, 0) / totalCalls) : 0;
+      const topAgentEntry = Object.entries(agentStats).sort((a, b) => b[1].total - a[1].total)[0];
+      const topAgent = topAgentEntry ? topAgentEntry[0] : '—';
+
+      let repeatCalls = 0;
+      let totalCallsAll = 0;
+      for (const dateKey in rawData) {
+        const calls = rawData[dateKey] || {};
+        const callerCount = {};
+        for (const id in calls) {
+          const call = calls[id];
+          totalCallsAll++;
+          const phone = call.phone_number;
+          if (phone) callerCount[phone] = (callerCount[phone] || 0) + 1;
+        }
+        for (const count of Object.values(callerCount)) {
+          if (count > 1) repeatCalls += (count - 1);
+        }
+      }
+      const repeatPct = totalCallsAll ? Math.round((repeatCalls / totalCallsAll) * 100) : 0;
+
+      document.getElementById('kpiTotalCalls').textContent = totalCalls.toLocaleString();
+      document.getElementById('kpiActiveAgents').textContent = activeAgents;
+      document.getElementById('kpiTopAgent').textContent = topAgent;
+      document.getElementById('kpiAvgAHT').textContent = formatSecondsToMinutes(avgAht);
+      document.getElementById('kpiRepeatPct').textContent = repeatPct + '%';
+    }
+
+    function computeAvgHourlyVolume() {
+      const h = Array(24).fill(0);
+      let days = 0;
+      for (const date in rawData) {
+        const calls = rawData[date];
+        const daily = Array(24).fill(0);
+        let has = false;
+        for (const id in calls) {
+          const d = new Date(calls[id].call_date);
+          if (!isNaN(d)) { daily[d.getHours()]++; has = true; }
+        }
+        if (has) { days++; daily.forEach((c, i) => h[i] += c); }
+      }
+      return h.map(v => days ? Math.round(v / days) : 0);
+    }
+
+    function computeSelectedDateHourlyVolume(dateStr) {
+      const calls = rawData[dateStr] || {};
+      const h = Array(24).fill(0);
+      for (const id in calls) {
+        const d = new Date(calls[id].call_date);
+        if (!isNaN(d)) h[d.getHours()]++;
+      }
+      return h;
+    }
+
+    function renderCombinedHourlyChart() {
+      const avgData = computeAvgHourlyVolume();
+      const todayData = computeSelectedDateHourlyVolume(selectedDate);
+
+      if (chartInstances.avgHourlyChart) chartInstances.avgHourlyChart.destroy();
+
+      chartInstances.avgHourlyChart = new ApexCharts(document.getElementById('avgHourlyChart'), {
+        series: [
+          { name: 'Average (All Time)', data: avgData },
+          { name: `Selected Date (${selectedDate})`, data: todayData }
+        ],
+        chart: { height: '100%', type: 'area', toolbar: { show: false } },
+        colors: ['#3b82f6', '#f59e0b'],
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.6, opacityTo: 0.1 } },
+        stroke: { curve: 'smooth', width: 3 },
+        markers: { size: 4 },
+        xaxis: { categories: Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`) },
+        legend: { position: 'top' }
+      });
+      chartInstances.avgHourlyChart.render();
+    }
+
+    function renderAgentChips() {
+      const containers = ['agentChipContainer', 'agentChipContainerVolume', 'agentChipContainerTalkTime'];
+      containers.forEach(id => {
+        const c = document.getElementById(id);
+        if (!c) return;
+        c.innerHTML = '';
+        agentList.forEach(a => {
+          const chip = document.createElement('div');
+          chip.className = `agent-chip ${a === currentSelectedAgent ? 'active' : ''}`;
+          chip.textContent = a;
+          chip.onclick = () => {
+            currentSelectedAgent = a;
+            renderAgentChips();
+            renderAHTHeatmap(a);
+            renderAgentVsSystemHourlyChart(a);
+            renderTalkTimeComparisonChart(a);
+          };
+          c.appendChild(chip);
+        });
+      });
+    }
+
+    function renderAHTHeatmap(agent) {
+      const s = agentStats[agent];
+      if (!s) return;
+      const data = s.hourly.map(arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0);
+
+      if (chartInstances.ahtHeatmapCanvas) chartInstances.ahtHeatmapCanvas.destroy();
+
+      chartInstances.ahtHeatmapCanvas = new ApexCharts(document.getElementById("ahtHeatmapCanvas"), {
+        series: [{ name: 'Avg AHT', data }],
+        chart: { type: 'bar', height: '100%', toolbar: { show: false } },
+        colors: ['#f59e0b'],
+        plotOptions: { bar: { borderRadius: 8 } },
+        xaxis: { categories: Array.from({length: 24}, (_, i) => `${i}:00`) },
+        yaxis: { labels: { formatter: val => formatSecondsToMinutes(val) } },
+        tooltip: { y: { formatter: val => formatSecondsToMinutes(val) } }
+      });
+      chartInstances.ahtHeatmapCanvas.render();
+    }
+
+    function renderAgentVsSystemHourlyChart(agent) {
+      const agentData = Array(24).fill(0);
+      const systemData = Array(24).fill(0);
+      const calls = rawData[selectedDate] || {};
+      for (const id in calls) {
+        const c = calls[id];
+        const h = parseInt(getHourFromDate(c.call_date));
+        if (!isNaN(h)) {
+          systemData[h]++;
+          if ((c.full_name || "Unknown").trim() === agent) agentData[h]++;
+        }
+      }
+
+      if (chartInstances.agentVsSystemHourlyCanvas) chartInstances.agentVsSystemHourlyCanvas.destroy();
+
+      chartInstances.agentVsSystemHourlyCanvas = new ApexCharts(document.getElementById("agentVsSystemHourlyCanvas"), {
+        series: [
+          { name: agent, data: agentData },
+          { name: 'Team Total', data: systemData }
+        ],
+        chart: { height: '100%', type: 'line', toolbar: { show: false } },
+        colors: ['#f59e0b', '#3b82f6'],
+        stroke: { curve: 'smooth', width: 4 },
+        fill: { opacity: 0.2 },
+        markers: { size: 5 },
+        xaxis: { categories: Array.from({length: 24}, (_, i) => `${i}:00`) }
+      });
+      chartInstances.agentVsSystemHourlyCanvas.render();
+    }
+
+    function renderTalkTimeComparisonChart(agent) {
+      const agentData = Array(24).fill(0);
+      const systemData = Array(24).fill(0);
+      const calls = rawData[selectedDate] || {};
+      for (const id in calls) {
+        const c = calls[id];
+        const h = parseInt(getHourFromDate(c.call_date));
+        if (!isNaN(h)) {
+          const acht = safeNum(c.acht);
+          systemData[h] += acht;
+          if ((c.full_name || "Unknown").trim() === agent) agentData[h] += acht;
+        }
+      }
+
+      if (chartInstances.talkTimeComparisonChart) chartInstances.talkTimeComparisonChart.destroy();
+
+      chartInstances.talkTimeComparisonChart = new ApexCharts(document.getElementById("talkTimeComparisonChart"), {
+        series: [
+          { name: agent, data: agentData },
+          { name: 'Team Total', data: systemData }
+        ],
+        chart: { height: '100%', type: 'area', toolbar: { show: false } },
+        colors: ['#10b981', '#ef4444'],
+        fill: { opacity: 0.3 },
+        stroke: { curve: 'smooth', width: 3 },
+        xaxis: { categories: Array.from({length: 24}, (_, i) => `${i}:00`) },
+        tooltip: { y: { formatter: val => formatSecondsToMinutes(val) } }
+      });
+      chartInstances.talkTimeComparisonChart.render();
+    }
+
+    function renderRepeatRateChart() {
+      const calls = rawData[selectedDate] || {};
+      const agentStatsToday = {};
+      for (const id in calls) {
+        const c = calls[id];
+        const agent = (c.full_name || "Unknown").trim();
+        const phone = c.phone_number;
+        if (!agentStatsToday[agent]) agentStatsToday[agent] = { total: 0, unique: new Set() };
+        agentStatsToday[agent].total++;
+        if (phone) agentStatsToday[agent].unique.add(phone);
+      }
+
+      const labels = Object.keys(agentStatsToday);
+      const data = labels.map(a => {
+        const s = agentStatsToday[a];
+        return s.total > 0 ? Math.round(((s.total - s.unique.size) / s.total) * 100) : 0;
+      });
+
+      if (chartInstances.repeatRateChart) chartInstances.repeatRateChart.destroy();
+
+      chartInstances.repeatRateChart = new ApexCharts(document.getElementById("repeatRateChart"), {
+        series: [{ name: 'Repeat Rate %', data }],
+        chart: { type: 'bar', height: '100%', toolbar: { show: false } },
+        colors: data.map(v => v > 30 ? '#ef4444' : v > 15 ? '#f59e0b' : '#10b981'),
+        plotOptions: { bar: { borderRadius: 8, horizontal: true } },
+        xaxis: { categories: labels },
+        yaxis: { max: 100, labels: { formatter: v => v + '%' } }
+      });
+      chartInstances.repeatRateChart.render();
+    }
+
+    function renderLoginSummary() {
+      const container = document.getElementById("loginSummaryContainer");
+      if (!container) return;
+
+      let html = `<table class="min-w-full text-sm bg-white divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Active Days</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Hours</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Avg Hours/Day</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">`;
+
+      agentList.forEach(agent => {
+        const s = agentStats[agent];
+        const days = Object.keys(s.firstPerDay).length;
+        let totalHours = 0;
+        Object.keys(s.firstPerDay).forEach(d => {
+          const first = s.firstPerDay[d];
+          const last = s.lastPerDay[d] || first;
+          totalHours += (last - first) / 3600000;
+        });
+        const avgHours = days > 0 ? (totalHours / days).toFixed(1) : '0.0';
+
+        html += `<tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${agent}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${days}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${totalHours.toFixed(1)}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${avgHours}</td>
+        </tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById("leaderboardContainer");
+      if (!container) return;
+
+      const ranked = Object.entries(agentStats)
+        .map(([a, s]) => ({ agent: a, total: s.total }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 50);
+
+      let html = '';
+      ranked.forEach((r, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+        html += `
+          <div class="flex items-center justify-between p-4 rounded-lg ${i < 3 ? 'bg-yellow-50' : 'bg-gray-50'}">
+            <div class="flex items-center gap-4">
+              <div class="text-2xl">${medal}</div>
+              <div class="font-semibold text-gray-900">${r.agent}</div>
+            </div>
+            <div class="text-2xl font-bold text-blue-600">${r.total.toLocaleString()}</div>
+          </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderCallSummaryTable() {
+      const container = document.getElementById("callSummaryTable");
+      if (!container) return;
+
+      let html = `<table class="min-w-full text-sm bg-white divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total Calls</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Unique Callers</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Avg AHT</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">`;
+
+      agentList.forEach(a => {
+        const s = agentStats[a];
+        const avg = s.total ? Math.round(s.ahtSum / s.total) : 0;
+        html += `<tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${a}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center">${s.total}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center">${s.uniqueCallers.size}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-center">${formatSecondsToMinutes(avg)}</td>
+        </tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function renderAllChartsAndTables() {
+      renderCombinedHourlyChart();
+      renderRepeatRateChart();
+      renderLoginSummary();
+      renderLeaderboard();
+      renderCallSummaryTable();
+
+      if (currentSelectedAgent) {
+        renderAHTHeatmap(currentSelectedAgent);
+        renderAgentVsSystemHourlyChart(currentSelectedAgent);
+        renderTalkTimeComparisonChart(currentSelectedAgent);
+      }
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        btn.classList.add('active');
+        document.querySelector(`.tab-panel[data-panel="${btn.dataset.tab}"]`).classList.remove('hidden');
+      });
+    });
+
+    // Date picker
+    const fp = flatpickr("#datePicker", {
+      dateFormat: "Y-m-d",
+      onChange: (dates, dateStr) => {
+        selectedDate = dateStr;
+        document.getElementById('selectedDate').textContent = dateStr;
+        document.getElementById('volumeChartDate').textContent = dateStr;
+        document.getElementById('talkTimeChartDate').textContent = dateStr;
+        renderAllChartsAndTables();
+      }
+    });
+
+    // Reload
+    document.getElementById('btnReload').addEventListener('click', loadDataFromGitHub);
+
+    // Initial load
+    loadDataFromGitHub();
+  </script>
+</body>
+</html>
