@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Performance - Hourly Call Volume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        :root, [data-bs-theme="light"] {
+            --phoenix-primary: #3874ff;
+            --phoenix-body-font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --phoenix-body-color: #31374a;
+            --phoenix-body-bg: #f5f7fa;
+            --phoenix-emphasis-color: #141824;
+            --phoenix-tertiary-color: #525b75;
+        }
+
+        body {
+            background-color: var(--phoenix-body-bg);
+            font-family: var(--phoenix-body-font-family);
+            color: var(--phoenix-body-color);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .chart-title {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--phoenix-emphasis-color);
+            margin-bottom: 0;
+        }
+
+        .chart-subtitle {
+            color: var(--phoenix-tertiary-color);
+            font-size: 0.95rem;
+            margin-top: 2px;
+        }
+
+/* Container to hold both the title and the chart */
+.chart-container {
+    position: relative;
+    background: transparent;
+    margin-top: 20px;
+}
+
+/* Position the title absolutely over the chart */
+.chart-container h2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10; /* Ensures it stays above the chart canvas */
+    
+    font-size: 1.35rem !important; 
+    font-weight: 500; 
+    color: #012970; 
+    margin: 0;
+    padding-left: 50px; /* Adjust this value to your liking */
+}
+
+#avgHourlyChart {
+    width: 100%;
+    height: 420px;
+}
+ h2 { font-size: 1.35rem !important; font-weight: 500; color: #012970; margin-bottom: 1.25rem; padding-bottom: 0.75rem; }
+
+        header {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <header class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
+        <div>
+            <h1 class="h3 mb-1">Agent Performance Dashboard</h1>
+            <p class="text-muted mb-0">Data for: <strong id="selectedDate">Loading...</strong></p>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="position-relative">
+                <span class="position-absolute top-50 start-3 translate-middle-y">📅</span>
+                <input 
+                    type="text" 
+                    id="datePicker" 
+                    placeholder="Select date"
+                    class="form-control ps-5" 
+                    style="width: 200px;" 
+                />
+            </div>
+
+            <button id="btnReload" class="btn btn-primary px-4">
+                Reset to Latest
+            </button>
+        </div>
+    </header>
+
+<div class="container-fluid">
+    <div class="chart-container">
+        <h2>Hourly Call Volume Comparison</h2>
+        <div id="avgHourlyChart"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
+
+let rawData = {};
+let selectedDate = null;
+let avgHourlyChart = null;
+
+// Format date for display in header and legend
+function formatDateDisplay(dateStr) {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+}
+
+function updateSelectedDateDisplay(dateStr) {
+    document.getElementById('selectedDate').textContent = formatDateDisplay(dateStr);
+}
+
+function getCallsForDate(dateStr) {
+    if (rawData[dateStr]) return rawData[dateStr];
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        const key = `${parts[0]}-${Number(parts[1])}-${Number(parts[2])}`;
+        return rawData[key] || {};
+    }
+    return {};
+}
+
+async function loadDataFromGitHub() {
+    try {
+        console.log("Fetching data...");
+        const res = await fetch(MASTER_DATA_URL + '?t=' + Date.now());
+        const json = await res.json();
+        rawData = json.calls || {};
+        
+        const availableDates = Object.keys(rawData)
+            .filter(key => /^\d{4}-\d{1,2}-\d{1,2}$/.test(key))
+            .sort((a, b) => new Date(b) - new Date(a));
+
+        selectedDate = availableDates.length > 0 ? availableDates[0] : new Date().toISOString().split('T')[0];
+        
+        updateSelectedDateDisplay(selectedDate);
+        renderHourlyChart();
+        initDatePicker();
+        
+        console.log(`Data loaded – ${availableDates.length} days available`);
+    } catch (err) {
+        console.error("Failed to load data", err);
+        document.body.innerHTML += `
+            <div class="alert alert-danger text-center mt-5">
+                <h4>Failed to load data</h4>
+                <p>Please check your internet connection or try again later.</p>
+            </div>`;
+    }
+}
+
+function computeAvgHourlyVolume() {
+    const hourly = Array(24).fill(0);
+    let dayCount = 0;
+
+    for (const date in rawData) {
+        const calls = rawData[date];
+        const daily = Array(24).fill(0);
+        let hasCalls = false;
+
+        for (const id in calls) {
+            const callDate = new Date(calls[id].call_date);
+            if (!isNaN(callDate)) {
+                daily[callDate.getHours()]++;
+                hasCalls = true;
+            }
+        }
+
+        if (hasCalls) {
+            dayCount++;
+            for (let h = 0; h < 24; h++) {
+                hourly[h] += daily[h];
+            }
+        }
+    }
+
+    return hourly.map(v => dayCount > 0 ? Math.round(v / dayCount) : 0);
+}
+
+function computeSelectedDateHourlyVolume(dateStr) {
+    const calls = getCallsForDate(dateStr);
+    const hourly = Array(24).fill(0);
+
+    for (const id in calls) {
+        const callDate = new Date(calls[id].call_date);
+        if (!isNaN(callDate)) {
+            hourly[callDate.getHours()]++;
+        }
+    }
+
+    return hourly.map(v => v > 0 ? v : null);
+}
+
+function renderHourlyChart() {
+    const avgData = computeAvgHourlyVolume();
+    const todayData = computeSelectedDateHourlyVolume(selectedDate);
+
+    const chartDom = document.getElementById('avgHourlyChart');
+    if (!chartDom) return;
+
+    if (avgHourlyChart) avgHourlyChart.dispose();
+    avgHourlyChart = echarts.init(chartDom);
+
+    const primaryColor = '#3874ff';
+
+    const hours = Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+
+    const option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'line',
+                lineStyle: {
+                    color: '#d1d5db',
+                    width: 1,
+                    type: 'solid'
+                }
+            }
+        },
+        legend: {
+            show: true,
+            orient: 'horizontal',
+            align: 'right',
+            right: '5%',
+            top: '8%',
+            itemWidth: 18,
+            itemHeight: 10,
+            textStyle: {
+                color: '#525b75',
+                fontSize: 13,
+                fontWeight: 600
+            },
+            data: [
+                { name: 'Average (All Days)', icon: 'roundRect' },
+                { name: formatDateDisplay(selectedDate), icon: 'line' }  // ← Dynamic date!
+            ]
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            top: '18%',
+            bottom: '10%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: hours,
+            boundaryGap: false,
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: {
+                show: true,
+                color: '#6b7280',
+                fontWeight: 600,
+                margin: 20,
+                formatter: function(value) {
+                    const hour = parseInt(value.split(':')[0], 10);
+                    if ([0, 6, 12, 18].includes(hour)) {
+                        return value;
+                    }
+                    return '';
+                }
+            },
+            splitLine: {
+                show: true,
+                lineStyle: { color: '#E0E0E0', // <--- CHANGE THIS HEX CODE TO YOUR PREFERRED COLOR
+                width: 1 }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            show: false
+        },
+        series: [
+            {
+                name: 'Average (All Days)',
+                type: 'line',
+                data: avgData,
+                symbol: 'circle',
+                symbolSize: 8,
+                itemStyle: {
+                    color: primaryColor,
+                    borderColor: '#fff',
+                    borderWidth: 3
+                },
+                lineStyle: {
+                    width: 2,
+                    color: primaryColor
+                },
+                showSymbol: false,
+                emphasis: {
+                    focus: 'series',
+                    itemStyle: {
+                        color: primaryColor,
+                        borderColor: '#fff',
+                        borderWidth: 5,
+                        shadowBlur: 20,
+                        shadowColor: 'rgba(56, 116, 255, 0.6)'
+                    },
+                    symbolSize: 14
+                }
+            },
+            {
+                name: formatDateDisplay(selectedDate),
+                type: 'line',
+                data: todayData,
+                symbol: 'circle',
+                symbolSize: 8,
+                itemStyle: {
+                    color: primaryColor,
+                    opacity: 0.7
+                },
+                lineStyle: {
+                    width: 2,
+                    type: 'dashed',
+                    color: primaryColor
+                },
+                showSymbol: false,
+                emphasis: {
+                    focus: 'series',
+                    itemStyle: {
+                        color: primaryColor,
+                        opacity: 1,
+                        borderColor: '#fff',
+                        borderWidth: 5,
+                        shadowBlur: 20,
+                        shadowColor: 'rgba(56, 116, 255, 0.6)'
+                    },
+                    symbolSize: 14
+                }
+            }
+        ]
+    };
+
+    avgHourlyChart.setOption(option);
+    window.addEventListener('resize', () => avgHourlyChart?.resize());
+}
+
+function initDatePicker() {
+    const dates = Object.keys(rawData)
+        .filter(d => /^\d{4}-\d{1,2}-\d{1,2}$/.test(d))
+        .sort((a, b) => new Date(b) - new Date(a));
+
+    flatpickr('#datePicker', {
+        altInput: true,
+        altFormat: "F j, Y",
+        dateFormat: "Y-m-d",
+        defaultDate: selectedDate,
+        maxDate: dates[0],
+        minDate: dates[dates.length - 1],
+        enable: dates,
+        onChange: (selectedDates, dateStr) => {
+            selectedDate = dateStr;
+            updateSelectedDateDisplay(dateStr);
+            renderHourlyChart();
+        }
+    });
+}
+
+document.getElementById('btnReload')?.addEventListener('click', () => {
+    const dates = Object.keys(rawData)
+        .filter(d => /^\d{4}-\d{1,2}-\d{1,2}$/.test(d))
+        .sort((a, b) => new Date(b) - new Date(a));
+    if (dates.length > 0) {
+        selectedDate = dates[0];
+        document.getElementById('datePicker')._flatpickr.setDate(selectedDate);
+        updateSelectedDateDisplay(selectedDate);
+        renderHourlyChart();
+    }
+});
+
+loadDataFromGitHub();
+</script>
+
+</body>
+</html>

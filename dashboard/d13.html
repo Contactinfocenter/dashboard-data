@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phoenix Call Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap');
+
+  /* Global Reset & Base Styles – Critical for Sticky Header */
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Nunito Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f8fafc; /* slate-50 */
+    color: #1e293b; /* slate-900 */
+    overflow-x: hidden;     /* No horizontal scroll */
+    overflow-y: auto;       /* Allow vertical scroll – required for sticky */
+    height: 100%;
+    min-height: 100vh;
+  }
+
+  /* Glass Navigation Bar */
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  /* Cards */
+  .phoenix-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+  }
+
+  /* Responsive Tabs with Smooth Scroll */
+  .tabs-container {
+    display: flex;
+    gap: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+    margin-bottom: 2rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  .tabs-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .tab-button {
+    padding: 0.75rem 0;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    position: relative;
+    white-space: nowrap;
+  }
+  .tab-button:hover {
+    color: #2563eb;
+  }
+  .tab-button.active {
+    color: #2563eb;
+  }
+
+  .tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    height: 3px;
+    background-color: #2563eb;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Agent Chips – Full width on mobile, better touch targets */
+  .agent-chip {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  .agent-chip:hover:not(.active) {
+    background: #e0e7ff;
+    transform: translateY(-1px);
+  }
+  .agent-chip.active {
+    background: #4f46e5;
+    color: white;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+
+  /* Charts – Responsive & Contained */
+  .chart-container {
+    height: 380px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+  @media (min-width: 640px) {
+    .chart-container { height: 420px !important; }
+  }
+  @media (min-width: 768px) {
+    .chart-container { height: 450px !important; }
+  }
+
+  /* Tables – Scrollable only inside card */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+  }
+  .table-wrapper table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+  }
+  .table-wrapper th,
+  .table-wrapper td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+  .table-wrapper thead {
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* Prevent any overflow in main content */
+  main {
+    overflow-x: hidden;
+  }
+
+  /* Ensure sticky header works perfectly */
+  header.sticky {
+    position: sticky;
+    top: 0;
+  }
+
+  /* Optional: Subtle scroll shadow on header */
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.08), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  body.scrolled header::after {
+    opacity: 1;
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-50 w-full glass-nav border-b border-slate-200 shadow-sm backdrop-blur-lg">
+  <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="h-16 flex items-center justify-between">
+
+      <!-- Left: Logo + Breadcrumb -->
+      <div class="flex items-center gap-6">
+        <!-- Logo -->
+        <div class="flex items-center shrink-0">
+          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <span class="text-white font-bold italic text-xl">C</span>
+          </div>
+          <span class="ml-3 text-xl font-black tracking-tight text-slate-800 uppercase hidden sm:block">
+            Call Dashboard
+          </span>
+        </div>
+
+        <!-- Breadcrumb (visible on sm and up) -->
+        <div class="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-500">
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          <span class="text-slate-600">Call Analytics</span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+          <span class="text-blue-600 font-bold" id="selectedDateDisplay">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Center: Nav (optional - hidden on small screens) -->
+      <nav class="hidden lg:flex items-center gap-4">
+        <button class="px-4 py-2 rounded-lg text-blue-600 bg-blue-50 text-sm font-bold flex items-center gap-1 transition hover:bg-blue-100">
+          Dashboard <i data-lucide="chevron-down" class="w-4 h-4"></i>
+        </button>
+        <button class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 text-sm font-bold transition">
+          Analytics
+        </button>
+      </nav>
+
+      <!-- Right: Controls -->
+      <div class="flex items-center gap-3">
+
+        <!-- Desktop Date Picker -->
+        <div class="relative hidden sm:flex items-center">
+          <i data-lucide="calendar" class="absolute left-4 w-4 h-4 text-slate-500 z-10 pointer-events-none"></i>
+          <input 
+            type="text" 
+            id="datePicker" 
+            placeholder="Select Date" 
+            class="pl-10 pr-4 py-2 bg-slate-100 rounded-full text-xs font-extrabold text-slate-700 uppercase tracking-wider h-10 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-600"
+          >
+        </div>
+
+        <!-- Mobile Date Trigger -->
+        <button id="mobileDateTrigger" class="sm:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition">
+          <i data-lucide="calendar" class="w-5 h-5 text-slate-600"></i>
+        </button>
+
+        <!-- Reload Button -->
+        <button 
+          id="btnReload" 
+          class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-full transition-colors relative" 
+          title="Reload latest data"
+        >
+          <i data-lucide="refresh-cw" class="w-5 h-5 transition-transform duration-500" id="reloadIcon"></i>
+          <i data-lucide="loader-2" class="w-5 h-5 absolute animate-spin hidden" id="loadingIcon"></i>
+        </button>
+
+        <!-- User Avatar -->
+        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-transparent hover:border-blue-500 transition-all cursor-pointer">
+          <i data-lucide="user" class="w-5 h-5 text-slate-500"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Breadcrumb (shown only on small screens) -->
+  <div class="px-4 sm:hidden pb-3 border-b border-slate-100 bg-white/80 backdrop-blur">
+    <div class="flex items-center gap-2 text-sm font-medium text-slate-500">
+      <span class="text-slate-600">Call Analytics</span>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+      <span class="text-blue-600 font-bold" id="selectedDateDisplayMobile">Loading...</span>
+    </div>
+  </div>
+</header>
+
+  <!-- Main Content -->
+  <main class="flex-1 w-full max-w-[1440px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+      <div class="phoenix-card text-center p-4">
+        <p class="text-slate-600 text-xs sm:text-sm font-medium">Total Calls</p>
+        <p class="text-2xl sm:text-3xl font-bold text-blue-600 mt-2" id="kpiTotalCalls">0</p>
+      </div>
+      <div class="phoenix-card text-center p-4">
+        <p class="text-slate-600 text-xs sm:text-sm font-medium">Active Agents</p>
+        <p class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-2" id="kpiActiveAgents">0</p>
+      </div>
+      <div class="phoenix-card text-center p-4">
+        <p class="text-slate-600 text-xs sm:text-sm font-medium">Top Performer</p>
+        <p class="text-lg sm:text-2xl font-bold text-purple-600 mt-2 truncate" id="kpiTopAgent">—</p>
+      </div>
+      <div class="phoenix-card text-center p-4">
+        <p class="text-slate-600 text-xs sm:text-sm font-medium">Avg Handle Time</p>
+        <p class="text-2xl sm:text-3xl font-bold text-orange-600 mt-2" id="kpiAvgAHT">0:00</p>
+      </div>
+      <div class="phoenix-card text-center p-4">
+        <p class="text-slate-600 text-xs sm:text-sm font-medium">Avg Repeat %</p>
+        <p class="text-2xl sm:text-3xl font-bold text-red-600 mt-2" id="kpiRepeatPct">0%</p>
+      </div>
+    </div>
+
+    <!-- Hourly Chart -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 -mb-8">
+        <div>
+          <h2 class="font-bold text-lg sm:text-xl tracking-tight text-slate-900">Hourly Call Volume</h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Comparing <span id="selectedDate" class="text-blue-600 font-semibold">...</span> vs System Average
+          </p>
+        </div>
+      </div>
+      <div id="avgHourlyChart" class="chart-container -mx-4 sm:mx-0"></div>
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="phoenix-card">
+      <div class="tabs-container">
+        <div class="tab-indicator" id="tabIndicator"></div>
+        <button class="tab-button active" data-tab="aht">AHT Analysis</button>
+        <button class="tab-button" data-tab="volume">Volume</button>
+        <button class="tab-button" data-tab="talktime">Talk Time</button>
+        <button class="tab-button" data-tab="login">Login Summary</button>
+        <button class="tab-button" data-tab="repeat">Repeat Rate</button>
+        <button class="tab-button" data-tab="leader">Leaderboard</button>
+        <button class="tab-button" data-tab="summary">Summary Table</button>
+      </div>
+
+      <div id="tabsContent" class="mt-6 sm:mt-8">
+        <!-- AHT TAB -->
+        <div class="tab-panel block" data-panel="aht">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Select Agent</h4>
+                <div id="agentChipContainer" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Average Handle Time per Hour</h4>
+                <div id="ahtHeatmapCanvas" class="chart-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VOLUME TAB -->
+        <div class="tab-panel hidden" data-panel="volume">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Select Agent</h4>
+                <div id="agentChipContainerVolume" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">
+                  Agent vs Team Hourly Volume – <span id="volumeChartDate"></span>
+                </h4>
+                <div id="agentVsSystemHourlyCanvas" class="chart-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TALK TIME TAB -->
+        <div class="tab-panel hidden" data-panel="talktime">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-3">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Select Agent</h4>
+                <div id="agentChipContainerTalkTime" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              </div>
+            </div>
+            <div class="lg:col-span-9">
+              <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+                <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">
+                  Agent Talk Time vs Team – <span id="talkTimeChartDate"></span>
+                </h4>
+                <div id="talkTimeComparisonChart" class="chart-container"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LOGIN TAB -->
+        <div class="tab-panel hidden" data-panel="login">
+          <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+            <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Agent Login Summary (First/Last Call)</h4>
+            <div class="table-wrapper mt-4">
+              <div id="loginSummaryContainer"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REPEAT TAB -->
+        <div class="tab-panel hidden" data-panel="repeat">
+          <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+            <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Repeat Caller Rate per Agent</h4>
+            <div id="repeatRateChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- LEADERBOARD TAB -->
+        <div class="tab-panel hidden" data-panel="leader">
+          <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+            <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Agent Leaderboard (Top 50)</h4>
+            <div id="leaderboardContainer" class="space-y-4 max-h-[600px] overflow-y-auto mt-4"></div>
+          </div>
+        </div>
+
+        <!-- SUMMARY TAB -->
+        <div class="tab-panel hidden" data-panel="summary">
+          <div class="bg-white/60 backdrop-blur border border-white/50 rounded-2xl p-4 sm:p-6 shadow">
+            <h4 class="font-bold text-blue-900 mb-4 text-base sm:text-lg">Call Summary Table</h4>
+            <div class="table-wrapper mt-4">
+              <div id="callSummaryTable"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Load JavaScript -->
+  <script src="dashboard.js"></script>
+</body>
+</html>

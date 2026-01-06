@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Total Sells Exact Match</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Phoenix Theme CSS Variables */
+        :root, [data-bs-theme="light"] {
+            --phoenix-blue: #3874ff;
+            --phoenix-indigo: #6610f2;
+            --phoenix-purple: #6f42c1;
+            --phoenix-pink: #d63384;
+            --phoenix-red: #fa3b1d;
+            --phoenix-orange: #e5780b;
+            --phoenix-yellow: #ffc107;
+            --phoenix-green: #25b003;
+            --phoenix-teal: #20c997;
+            --phoenix-cyan: #0097eb;
+            --phoenix-black: #000000;
+            --phoenix-white: #fff;
+            --phoenix-gray: #6e7891;
+            --phoenix-gray-dark: #141824;
+            --phoenix-gray-50: #f5f7fa;
+            --phoenix-gray-100: #eff2f6;
+            --phoenix-gray-200: #e3e6ed;
+            --phoenix-gray-300: #cbd0dd;
+            --phoenix-gray-400: #9fa6bc;
+            --phoenix-gray-500: #8a94ad;
+            --phoenix-gray-600: #6e7891;
+            --phoenix-gray-700: #525b75;
+            --phoenix-gray-800: #3e465b;
+            --phoenix-gray-900: #31374a;
+            --phoenix-gray-1000: #222834;
+            --phoenix-gray-1100: #141824;
+            --phoenix-primary: #3874ff;
+            --phoenix-secondary: #31374a;
+            --phoenix-success: #25b003;
+            --phoenix-info: #0097eb;
+            --phoenix-warning: #e5780b;
+            --phoenix-danger: #fa3b1d;
+            --phoenix-light: #eff2f6;
+            --phoenix-dark: #141824;
+            --phoenix-primary-rgb: 56, 116, 255;
+            --phoenix-body-font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --phoenix-body-color: #31374a;
+            --phoenix-body-bg: #f5f7fa;
+            --phoenix-emphasis-color: #141824;
+            --phoenix-tertiary-color: #525b75;
+            --phoenix-border-color: #cbd0dd;
+        }
+
+        body {
+            background-color: var(--phoenix-body-bg);
+            font-family: var(--phoenix-body-font-family);
+            color: var(--phoenix-body-color);
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--phoenix-emphasis-color);
+            margin-bottom: 0;
+        }
+
+        .chart-subtitle {
+            color: var(--phoenix-tertiary-color);
+            font-size: 0.95rem;
+            margin-top: 2px;
+        }
+
+        .form-select-phoenix {
+            border: 1px solid var(--phoenix-border-color);
+            color: #374151;
+            font-size: 0.85rem;
+            padding: 0.4rem 2.5rem 0.4rem 1rem;
+            border-radius: 0.5rem;
+            background-color: #fff;
+        }
+
+        #totalSellsChart {
+            width: 100%;
+            height: 400px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+         <header class="sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between
+                   bg-white/30 backdrop-blur-xl border border-white/40 shadow-lg rounded-2xl p-5 mb-6">
+            <div>
+                <div class="text-2xl font-bold tracking-wide">Agent Performance</div>
+                <div class="text-gray-600 text-sm">Data of: <strong id="selectedDate">—</strong></div>
+            </div>
+
+            <div class="mt-4 md:mt-0 flex items-center gap-4">
+                <div class="flex items-center">
+                <span class="mr-2">📅</span>
+                <input id="datePicker" placeholder="Select date"
+                        class="bg-white/40 backdrop-blur-xl text-gray-700 text-sm rounded-lg border border-white/40 p-2.5" />
+                </div>
+
+                <button id="btnReload" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition">
+                  Reset
+                </button>
+            </div>
+    </header>   
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="chart-title">Total sells</h2>
+            <p class="chart-subtitle">Payment received across all channels</p>
+        </div>
+        <select class="form-select-phoenix w-auto">
+            <option>Mar 1 - 31, 2022</option>
+        </select>
+    </div>
+    <div id="totalSellsChart"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chartDom = document.getElementById('totalSellsChart');
+        if (!chartDom) return;
+        const myChart = echarts.init(chartDom);
+
+        const days = Array.from({length: 31}, (_, i) => {
+            const dayNum = (i + 1).toString().padStart(2, '0');
+            return `${dayNum} Mar`;
+        });
+
+        const currentSells = [10, 15, 25, 30, 30, 30, 25, 22, 22, 22, 22, 22, 22, 45, 45, 45, 52, 60, 70, 85, 65, 50, 50, 50, 35, 22, 22, 30, 30, 30, 30];
+        const previousSells = [20, 20, 18, 12, 10, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 20, 40, 40, 40, 62, 75, 55, 38, 42, 48, 55, 50, 48, 45, 42, 42];
+
+        const primaryColor = '#3874ff';
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'line',
+                    lineStyle: {
+                        color: '#d1d5db',
+                        width: 1,
+                        type: 'solid'
+                    }
+                }
+            },
+            legend: {
+                show: true,
+                orient: 'horizontal',
+                align: 'right',
+                right: '5%',
+                top: '8%',
+                itemWidth: 18,
+                itemHeight: 10,
+                textStyle: {
+                    color: '#525b75',
+                    fontSize: 13,
+                    fontWeight: 600
+                },
+                data: [
+                    { name: 'Current period', icon: 'roundRect' },
+                    { name: 'Previous period', icon: 'line' }
+                ]
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                top: '18%',
+                bottom: '10%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: days,
+                boundaryGap: false,
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: {
+                    show: true,
+                    color: '#6b7280',
+                    fontWeight: 600,
+                    margin: 20,
+                    formatter: function(value) {
+                        const day = parseInt(value.split(' ')[0], 10);
+                        if ([1, 15, 31].includes(day)) {
+                            return value;
+                        }
+                        return '';
+                    }
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle: { color: '#f3f4f6', width: 1 }
+                }
+            },
+            yAxis: {
+                type: 'value',
+                show: false
+            },
+            series: [
+                {
+                    name: 'Current period',
+                    type: 'line',
+                    data: currentSells,
+                    symbol: 'circle',
+                    symbolSize: 8,                    // Same base size
+                    itemStyle: {
+                        color: primaryColor,
+                        borderColor: '#fff',
+                        borderWidth: 3
+                    },
+                    lineStyle: {
+                        width: 2,
+                        color: primaryColor
+                    },
+                    showSymbol: false,
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            color: primaryColor,
+                            borderColor: '#fff',
+                            borderWidth: 5,
+                            shadowBlur: 20,
+                            shadowColor: 'rgba(56, 116, 255, 0.6)'
+                        },
+                        symbolSize: 14                // Same hover size
+                    }
+                },
+                {
+                    name: 'Previous period',
+                    type: 'line',
+                    data: previousSells,
+                    symbol: 'circle',
+                    symbolSize: 8,                    // Same base size as current
+                    itemStyle: {
+                        color: primaryColor,
+                        opacity: 0.7
+                    },
+                    lineStyle: {
+                        width: 2,
+                        type: 'dashed',
+                        color: primaryColor
+                    },
+                    showSymbol: false,
+                    emphasis: {
+                        focus: 'series',
+                        itemStyle: {
+                            color: primaryColor,
+                            opacity: 1,
+                            borderColor: '#fff',
+                            borderWidth: 5,
+                            shadowBlur: 20,
+                            shadowColor: 'rgba(56, 116, 255, 0.6)'
+                        },
+                        symbolSize: 14                // Same hover size as current
+                    }
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+        window.addEventListener('resize', () => myChart.resize());
+    });
+</script>
+</body>
+</html>
