@@ -1,12 +1,4 @@
 <!doctype html>
-<!--
-* Tabler - Premium and Open Source dashboard template with responsive and high quality UI.
-* @version 1.4.0
-* @link https://tabler.io
-* Copyright 2018-2026 The Tabler Authors
-* Copyright 2018-2026 codecalm.net Paweł Kuna
-* Licensed under MIT (https://github.com/tabler/tabler/blob/master/LICENSE)
--->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -30,10 +22,67 @@
     <!-- BEGIN CUSTOM FONT -->
     <style>
       @import url("https://rsms.me/inter/inter.css");
+/* Minimal, elegant focus ring */
+.form-control:focus,
+.form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.18) !important;
+}
+
+/* Center calendar icon perfectly */
+.input-icon {
+  position: relative;
+}
+
+.input-icon .form-control {
+  padding-right: 2.5rem; /* Make room for icon */
+}
+
+.input-icon .input-icon-addon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.input-icon .input-icon-addon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #6c757d;
+}
+
+/* Force override any Tabler/ApexCharts default tooltip styles */
+.apexcharts-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+.apexcharts-tooltip .apexcharts-tooltip-title {
+  display: none !important;
+}
+
+.apexcharts-tooltip .apexcharts-tooltip-series-group {
+  padding: 0 !important;
+  background: transparent !important;
+}
     </style>
     <!-- END CUSTOM FONT -->
      <!-- ApexCharts (required for charts) -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Flatpickr JS (add before your custom script) -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   </head>
   <body>
     <a href="#content" class="visually-hidden skip-link">Skip to main content</a>
@@ -76,30 +125,65 @@
           </div>
           <!-- END NAVBAR LOGO -->
           <div class="navbar-nav flex-row order-md-last">
-            <div class="nav-item d-none d-md-flex me-3">
-              <div class="btn-list">
-                <a href="https://github.com/sponsors/codecalm" class="btn btn-6" target="_blank" rel="noreferrer">
-                  <!-- Download SVG icon from http://tabler.io/icons/icon/heart -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                    focusable="false"
-                    class="icon text-pink icon-2"
-                  >
-                    <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
-                  </svg>
-                  Sponsor
-                </a>
-              </div>
-            </div>
+            <!-- Date Filter in Navbar -->
+<!-- Date Picker + Volume Comparison + Reload (Desktop View) -->
+<!-- Controls Row - All Inline -->
+<div class="navbar-nav d-none d-md-flex align-items-center">
+  <!-- Date Picker -->
+  <div class="nav-item me-3">
+    <div class="input-icon">
+      <input type="text" id="datePicker" class="form-control form-control-sm input-active" placeholder="Select date" readonly style="width: 160px;">
+      <span class="input-icon-addon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2H5a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2z"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- Volume Comparison Selector -->
+  <div class="nav-item me-3">
+    <select id="volumeRangeSelect" class="form-select form-select-sm" style="min-width: 200px;">
+      <option value="all">All Time Average</option>
+      <option value="7">Last 7 Days Average</option>
+      <option value="30" selected>Last 30 Days Average</option>
+      <option value="custom">Custom Range</option>
+    </select>
+  </div>
+
+  <!-- Custom Range Inputs (hidden by default) -->
+  <div id="customRangeInputs" class="d-flex align-items-center me-3" style="display: none;">
+    <div class="input-icon me-2">
+      <input type="text" id="rangeStart" class="form-control form-control-sm flatpickr" placeholder="Start" readonly style="width: 130px;">
+      <span class="input-icon-addon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2H5a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2z"></path>
+        </svg>
+      </span>
+    </div>
+    <div class="input-icon">
+      <input type="text" id="rangeEnd" class="form-control form-control-sm flatpickr" placeholder="End" readonly style="width: 130px;">
+      <span class="input-icon-addon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2H5a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2z"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- Reload Button -->
+  <div class="nav-item">
+    <button id="btnReload" class="btn btn-sm btn-outline-primary d-flex align-items-center px-3">
+      <span id="loadingIcon" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="width: 1rem; height: 1rem; display: none;"></span>
+      <svg id="reloadIcon" xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6"></path>
+        <path d="M1 20v-6h6"></path>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+      <span id="reloadText">Reload</span>
+    </button>
+  </div>
+</div>
             <div class="d-none d-md-flex me-3">
               <!-- BEGIN THEME TOGGLE -->
               <div class="nav-item">
@@ -327,615 +411,7 @@
                 <!-- END NAVBAR NOTIFICATIONS -->
               </div>
               <!-- END NOTIFICATIONS -->
-              <!-- BEGIN APPS -->
-              <div class="nav-item dropdown d-none d-md-flex">
-                <a
-                  href="#"
-                  class="nav-link px-0"
-                  data-bs-toggle="dropdown"
-                  tabindex="-1"
-                  aria-label="Show app menu"
-                  data-bs-auto-close="outside"
-                  aria-expanded="false"
-                >
-                  <!-- Download SVG icon from http://tabler.io/icons/icon/apps -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                    focusable="false"
-                    class="icon icon-1"
-                  >
-                    <path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" />
-                    <path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" />
-                    <path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" />
-                    <path d="M14 7l6 0" />
-                    <path d="M17 4l0 6" />
-                  </svg>
-                </a>
-                <!-- BEGIN NAVBAR APPS -->
-                <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
-                  <div class="card">
-                    <div class="card-header">
-                      <div class="card-title">My Apps</div>
-                      <div class="card-actions btn-actions">
-                        <a href="#" class="btn-action">
-                          <!-- Download SVG icon from http://tabler.io/icons/icon/settings -->
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                            focusable="false"
-                            class="icon icon-1"
-                          >
-                            <path
-                              d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065"
-                            />
-                            <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-                          </svg>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="card-body scroll-y p-2" style="max-height: 50vh">
-                      <div class="row g-0">
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/amazon.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Amazon</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/android.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Android</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/app-store.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Apple App Store</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/apple-podcast.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Apple Podcast</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/apple.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Apple</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/behance.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Behance</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/discord.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Discord</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/dribbble.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Dribbble</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/dropbox.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Dropbox</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/ever-green.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Ever Green</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/facebook.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Facebook</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/figma.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Figma</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/github.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">GitHub</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/gitlab.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">GitLab</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-ads.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Ads</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-adsense.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google AdSense</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-analytics.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Analytics</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-cloud.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Cloud</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-drive.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Drive</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-fit.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Fit</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-home.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Home</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-maps.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Maps</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-meet.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Meet</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-photos.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Photos</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-play.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Play</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-shopping.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Shopping</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google-teams.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google Teams</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/google.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Google</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/instagram.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Instagram</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/klarna.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Klarna</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/linkedin.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">LinkedIn</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/mailchimp.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Mailchimp</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/medium.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Medium</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/messenger.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Messenger</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/meta.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Meta</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/monday.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Monday</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/netflix.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Netflix</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/notion.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Notion</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/office-365.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Office 365</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/opera.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Opera</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/paypal.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">PayPal</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/petreon.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Patreon</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/pinterest.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Pinterest</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/play-store.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Play Store</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/quora.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Quora</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/reddit.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Reddit</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/shopify.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Shopify</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/skype.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Skype</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/slack.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Slack</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/snapchat.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Snapchat</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/soundcloud.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">SoundCloud</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/spotify.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Spotify</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/stripe.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Stripe</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/telegram.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Telegram</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/tiktok.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">TikTok</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/tinder.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Tinder</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/trello.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Trello</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/truth.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Truth</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/tumblr.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Tumblr</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/twitch.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Twitch</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/twitter.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Twitter</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/vimeo.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Vimeo</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/vk.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">VK</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/watppad.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Wattpad</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/webflow.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Webflow</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/whatsapp.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">WhatsApp</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/wordpress.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">WordPress</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/xing.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Xing</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/yelp.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Yelp</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/youtube.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">YouTube</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/zapier.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Zapier</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/zendesk.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Zendesk</span>
-                          </a>
-                        </div>
-                        <div class="col-4">
-                          <a href="#" class="d-flex flex-column flex-center text-center text-secondary py-2 px-2 link-hoverable">
-                            <img src="./static/brands/zoom.svg" class="w-6 h-6 mx-auto mb-2" width="24" height="24" alt="" />
-                            <span class="h5">Zoom</span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <!-- END NAVBAR APPS -->
-              </div>
-              <!-- END APPS -->
-              <!-- BEGIN LANGUAGE SELECTOR -->
-              <div class="nav-item dropdown d-none d-md-flex">
-                <a
-                  href="#"
-                  class="nav-link px-0"
-                  data-bs-toggle="dropdown"
-                  tabindex="-1"
-                  aria-label="Select language"
-                  data-bs-auto-close="outside"
-                  aria-expanded="false"
-                >
-                  EN
-                </a>
-                <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end">
-                  <a class="dropdown-item" href="#" data-lang="cs"> Čeština </a>
-                  <a class="dropdown-item" href="#" data-lang="de"> Deutsch </a>
-                  <a class="dropdown-item" href="#" data-lang="el"> Ελληνικά </a>
-                  <a class="dropdown-item" href="#" data-lang="en"> English </a>
-                  <a class="dropdown-item" href="#" data-lang="es"> Español </a>
-                  <a class="dropdown-item" href="#" data-lang="fr"> Français </a>
-                  <a class="dropdown-item" href="#" data-lang="hi"> हिंदी </a>
-                  <a class="dropdown-item" href="#" data-lang="hu"> Magyar </a>
-                  <a class="dropdown-item" href="#" data-lang="id"> Bahasa Indonesia </a>
-                  <a class="dropdown-item" href="#" data-lang="it"> Italiano </a>
-                  <a class="dropdown-item" href="#" data-lang="ja"> 日本語 </a>
-                  <a class="dropdown-item" href="#" data-lang="ko"> 한국어 </a>
-                  <a class="dropdown-item" href="#" data-lang="nl"> Nederlands (Nederland) </a>
-                  <a class="dropdown-item" href="#" data-lang="pl"> Polski </a>
-                  <a class="dropdown-item" href="#" data-lang="pt"> Português </a>
-                  <a class="dropdown-item" href="#" data-lang="ro"> Română </a>
-                  <a class="dropdown-item" href="#" data-lang="ru"> Русский </a>
-                  <a class="dropdown-item" href="#" data-lang="th"> ภาษาไทย </a>
-                  <a class="dropdown-item" href="#" data-lang="tr"> Türkçe </a>
-                  <a class="dropdown-item" href="#" data-lang="uk"> Українською </a>
-                  <a class="dropdown-item" href="#" data-lang="vi"> Tiếng Việt </a>
-                  <a class="dropdown-item" href="#" data-lang="zh"> 中文 </a>
-                </div>
-              </div>
-              <!-- END LANGUAGE SELECTOR -->
             </div>
-            <!-- BEGIN USER MENU -->
-            <div class="nav-item dropdown">
-              <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
-                <span class="avatar avatar-sm" style="background-image: url(./static/avatars/000m.jpg)"> </span>
-                <div class="d-none d-xl-block ps-2">
-                  <div>Paweł Kuna</div>
-                  <div class="mt-1 small text-secondary">UI Designer</div>
-                </div>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <a class="dropdown-item" href="./profile.html"
-                  ><!-- Download SVG icon from http://tabler.io/icons/icon/user -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                    focusable="false"
-                    class="icon dropdown-item-icon icon-2"
-                  >
-                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-                  </svg>
-                  Profile</a
-                >
-                <a class="dropdown-item" href="#"
-                  ><!-- Download SVG icon from http://tabler.io/icons/icon/chart-pie -->
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                    focusable="false"
-                    class="icon dropdown-item-icon icon-2"
-                  >
-                    <path d="M10 3.2a9 9 0 1 0 10.8 10.8a1 1 0 0 0 -1 -1h-6.8a2 2 0 0 1 -2 -2v-7a.9 .9 0 0 0 -1 -.8" />
-                    <path d="M15 3.5a9 9 0 0 1 5.5 5.5h-4.5a1 1 0 0 1 -1 -1v-4.5" />
-                  </svg>
-                  Analytics</a
-                >
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="./settings.html">Settings &amp; Privacy</a>
-                <a class="dropdown-item" href="#">Help</a>
-                <a class="dropdown-item" href="./sign-in.html">Sign out</a>
-              </div>
-            </div>
-            <!-- END USER MENU -->
           </div>
         </div>
       </header>
@@ -1659,14 +1135,97 @@
 
 <!-- Chart Section: Call Volume Over Time -->
 
-<div class="col-12 mt-5">
+<div class="col-12 mt-3">
   <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h3 class="card-title">Call Volume Today</h3>
-      <div class="text-muted small">Last updated: <span id="chartLastUpdate">Loading...</span></div>
+    <div class="card-body "> 
+      <h3 class="card-title -mb-2">Hourly Call Volume</h3>
+ 
+      <div id="chart-call-volume" style="height: 320px; width: 100%;"></div>
     </div>
-    <div class="card-body">
-      <div id="chart-call-volume" class="chart-lg"></div>
+  </div>
+</div>
+
+<!-- Chart Section: Repeat -->
+
+<div class="col-12 mt-3">
+  <div class="card">
+    <div class="card-body "> 
+      <h3 class="card-title mb-2">
+         Per Agent Repeat % age - <span id="selectedDate"></span>
+      </h3>
+ 
+      <div id="repeatRateChart" style="height: 420px; width: 100%;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs Section - AHT, Volume, Talk Time -->
+<div class="col-12 mt-3">
+  <div class="card shadow-sm border-0">
+    <!-- Tabs Navigation -->
+    <div class="card-header bg-white border-bottom-0 px-4 pt-4">
+      <ul class="nav nav-tabs card-header-tabs border-0 flex-nowrap" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-medium" id="aht-tab" data-bs-toggle="tab" data-bs-target="#aht" type="button" role="tab" aria-controls="aht" aria-selected="true" aria-label="AHT & Hourly Analysis Tab">
+            AHT & Hourly Analysis
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-medium" id="volume-tab" data-bs-toggle="tab" data-bs-target="#volume" type="button" role="tab" aria-controls="volume" aria-selected="false" aria-label="Volume Comparison Tab">
+            Volume Comparison
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-medium" id="talktime-tab" data-bs-toggle="tab" data-bs-target="#talktime" type="button" role="tab" aria-controls="talktime" aria-selected="false" aria-label="Talk Time Comparison Tab">
+            Talk Time Comparison
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="card-body tab-content p-0" id="dashboardTabsContent">
+      <!-- Tab 1: AHT & Hourly Analysis -->
+      <div class="tab-pane fade show active" id="aht" role="tabpanel" aria-labelledby="aht-tab">
+        <div class="p-4">
+          <!-- Agent Chips -->
+          <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center" id="agentChipContainer"></div>
+          
+          <!-- Chart Container with Loading Fallback -->
+          <div class="chart-container position-relative" style="height: 420px;">
+            <canvas id="ahtHeatmapCanvas"></canvas>
+            <div class="position-absolute top-50 start-50 translate-middle text-muted small d-none" id="ahtLoading">
+              Loading AHT Heatmap...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Volume Comparison -->
+      <div class="tab-pane fade" id="volume" role="tabpanel" aria-labelledby="volume-tab">
+        <div class="p-4">
+          <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center" id="agentChipContainerVolume"></div>
+          <div class="chart-container position-relative" style="height: 420px;">
+            <canvas id="agentVsSystemHourlyCanvas"></canvas>
+            <div class="position-absolute top-50 start-50 translate-middle text-muted small d-none" id="volumeLoading">
+              Loading Volume Comparison...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Talk Time Comparison -->
+      <div class="tab-pane fade" id="talktime" role="tabpanel" aria-labelledby="talktime-tab">
+        <div class="p-4">
+          <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center" id="agentChipContainerTalkTime"></div>
+          <div class="chart-container position-relative" style="height: 420px;">
+            <canvas id="talkTimeComparisonChart"></canvas>
+            <div class="position-absolute top-50 start-50 translate-middle text-muted small d-none" id="talktimeLoading">
+              Loading Talk Time Comparison...
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2064,8 +1623,11 @@
       });
     </script>
     <!-- END PAGE SCRIPTS -->
+<!-- ECharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-// === CALL CENTER DASHBOARD SCRIPT - YOUR ORIGINAL LOGIC ===
 const MASTER_DATA_URL = "https://raw.githubusercontent.com/Contactinfocenter/dashboard-data/main/data/calls/all_calls.json";
 
 let rawData = {};
@@ -2073,6 +1635,7 @@ let agentList = [];
 let agentStats = {};
 let selectedDate = null;
 let currentSelectedAgent = null;
+let datePickerInstance = null;
 
 function safeNum(v) { return Number.isFinite(Number(v)) ? Number(v) : 0; }
 
@@ -2091,9 +1654,11 @@ function formatDateDisplay(dateStr) {
 
 function updateSelectedDateDisplay(dateStr) {
   const display = formatDateDisplay(dateStr);
-  document.getElementById('selectedDate') && (document.getElementById('selectedDate').textContent = display);
-  document.getElementById('selectedDateDisplay') && (document.getElementById('selectedDateDisplay').textContent = display);
-  document.getElementById('volumeChartDate') && (document.getElementById('volumeChartDate').textContent = display);
+  const els = ['selectedDate', 'selectedDateDisplay', 'volumeChartDate'];
+  els.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = display;
+  });
 }
 
 function getCallsForDate(dateStr) {
@@ -2106,9 +1671,25 @@ function getCallsForDate(dateStr) {
   return {};
 }
 
+// FULLY FIXED RELOAD WITH COMPLETE RESET
 async function loadDataFromGitHub() {
+  const reloadBtn = document.getElementById('btnReload');
+  const loadingIcon = document.getElementById('loadingIcon');
+  const reloadIcon = document.getElementById('reloadIcon');
+  const reloadText = document.getElementById('reloadText');
+
+  if (!reloadBtn) return;
+
+  // === START LOADING STATE ===
+  reloadBtn.disabled = true;
+  if (loadingIcon) loadingIcon.style.display = 'inline-block';
+  if (reloadIcon) reloadIcon.style.display = 'none';
+  if (reloadText) reloadText.textContent = 'Loading...';
+
   try {
     const res = await fetch(MASTER_DATA_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const json = await res.json();
     rawData = json.calls || {};
 
@@ -2116,15 +1697,50 @@ async function loadDataFromGitHub() {
       .filter(key => /^\d{4}-\d{1,2}-\d{1,2}$/.test(key))
       .sort((a, b) => new Date(b) - new Date(a));
 
-    selectedDate = availableDates.length > 0 ? availableDates[0] : null;
+    if (availableDates.length === 0) {
+      alert("No data available.");
+      return;
+    }
 
+    // Set to the latest date
+    selectedDate = availableDates[0];
+
+    // Process fresh data
     processRawData();
+
+    // Update displays
     updateSelectedDateDisplay(selectedDate);
     renderKPIs();
-    renderCallVolumeChart(); // Your avgHourlyChart logic
+    renderCallVolumeChart();
+    renderRepeatRateChartForSelectedDate();
+
+    // === FULL CONTROL RESET ===
+    // Reset volume selector to default
+    const rangeSelect = document.getElementById('volumeRangeSelect');
+    if (rangeSelect) rangeSelect.value = '30'; // or 'all' if you prefer
+
+    // Hide and clear custom range
+    const customDiv = document.getElementById('customRangeInputs');
+    if (customDiv) customDiv.style.display = 'none';
+
+    const rangeStart = document.getElementById('rangeStart');
+    const rangeEnd = document.getElementById('rangeEnd');
+    if (rangeStart) rangeStart.value = '';
+    if (rangeEnd) rangeEnd.value = '';
+
+    // Re-initialize controls with fresh data
+    initDatePicker();
+    initRangeControls();
+
   } catch (err) {
     console.error("Failed to load data", err);
-    alert("Failed to reload data. Please try again.");
+    alert("Failed to reload data. Check console for details.");
+  } finally {
+    // === ALWAYS RESTORE BUTTON TO DEFAULT ===
+    reloadBtn.disabled = false;
+    if (loadingIcon) loadingIcon.style.display = 'none';
+    if (reloadIcon) reloadIcon.style.display = 'inline-block';
+    if (reloadText) reloadText.textContent = 'Reload';
   }
 }
 
@@ -2174,11 +1790,9 @@ function renderKPIs() {
   const activeAgents = agentList.length;
   const avgAht = totalCalls ? Math.round(Object.values(agentStats).reduce((a, s) => a + s.ahtSum, 0) / totalCalls) : 0;
 
-  // Top performer by total calls
   const topAgentEntry = Object.entries(agentStats).sort((a, b) => b[1].total - a[1].total)[0];
   const topAgent = topAgentEntry ? topAgentEntry[0] : '—';
 
-  // Repeat % calculation (your original logic - kept exactly)
   let repeatCalls = 0;
   let totalCallsAll = 0;
   for (const dateKey in rawData) {
@@ -2203,7 +1817,6 @@ function renderKPIs() {
   document.getElementById('kpiRepeatPct').textContent = repeatPct + '%';
 }
 
-// Your original avgHourlyChart logic (kept unchanged)
 function computeAvgHourlyVolume() {
   const h = Array(24).fill(0);
   let days = 0;
@@ -2230,38 +1843,457 @@ function computeSelectedDateHourlyVolume(dateStr) {
   return h.map(v => v > 0 ? v : null);
 }
 
+function computeRangeHourlyAverage(startDateStr, endDateStr) {
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  end.setHours(23, 59, 59, 999);
+
+  const hourlyTotals = Array(24).fill(0);
+  let daysCount = 0;
+
+  for (const dateKey in rawData) {
+    const date = new Date(dateKey);
+    if (isNaN(date.getTime())) continue;
+    if (date >= start && date <= end) {
+      const calls = rawData[dateKey] || {};
+      const daily = Array(24).fill(0);
+      let hasData = false;
+
+      for (const id in calls) {
+        const callDate = new Date(calls[id].call_date);
+        if (!isNaN(callDate.getTime())) {
+          const hour = callDate.getHours();
+          daily[hour]++;
+          hasData = true;
+        }
+      }
+
+      if (hasData) {
+        daysCount++;
+        daily.forEach((count, h) => hourlyTotals[h] += count);
+      }
+    }
+  }
+
+  return hourlyTotals.map(total => daysCount > 0 ? Math.round(total / daysCount) : 0);
+}
+
+function initRangeControls() {
+  const select = document.getElementById('volumeRangeSelect');
+  const customDiv = document.getElementById('customRangeInputs');
+
+  if (!select) return;
+
+  select.addEventListener('change', function () {
+    const mode = this.value;
+    if (customDiv) customDiv.style.display = mode === 'custom' ? 'flex' : 'none';
+    renderCallVolumeChart();
+  });
+
+  // Re-init Flatpickr with current available dates
+  const availableDates = Object.keys(rawData)
+    .filter(d => /^\d{4}-\d{1,2}-\d{1,2}$/.test(d));
+
+  flatpickr('#rangeStart', {
+    dateFormat: "Y-m-d",
+    maxDate: selectedDate,
+    enable: availableDates,
+    onChange: () => renderCallVolumeChart()
+  });
+  
+  flatpickr('#rangeEnd', {
+    dateFormat: "Y-m-d",
+    maxDate: selectedDate,
+    enable: availableDates,
+    onChange: () => renderCallVolumeChart()
+  });
+}
+
 function renderCallVolumeChart() {
-  const avgData = computeAvgHourlyVolume();
   const todayData = computeSelectedDateHourlyVolume(selectedDate);
 
-  const options = {
-    series: [
-      { name: 'Average (All Days)', data: avgData },
-      { name: formatDateDisplay(selectedDate), data: todayData }
-    ],
-    chart: { type: "area", height: 400, toolbar: { show: false } },
-    colors: ["#94a3b8", "#3874ff"],
-    fill: { opacity: [0.15, 0.4] },
-    stroke: { curve: "smooth", width: [2, 3] },
-    xaxis: {
-      type: "category",
-      categories: Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`),
-      labels: { style: { colors: "#9ca3af" } }
+  let rangeAvgData = null;
+  let rangeLabel = null;
+
+  const rangeSelect = document.getElementById('volumeRangeSelect');
+  const mode = rangeSelect ? rangeSelect.value : '30';
+
+  if (mode === 'all') {
+    rangeAvgData = computeAvgHourlyVolume();
+    rangeLabel = 'Daily Average (All Time)';
+  } else if (mode === '7' || mode === '30') {
+    const daysBack = mode === '7' ? 7 : 30;
+    const endDate = new Date(selectedDate);
+    const startDate = new Date(endDate);
+    startDate.setDate(endDate.getDate() - daysBack + 1);
+
+    rangeAvgData = computeRangeHourlyAverage(
+      startDate.toISOString().split('T')[0],
+      selectedDate
+    );
+    rangeLabel = `Daily Avg (Last ${daysBack} Days)`;
+  } else if (mode === 'custom') {
+    const start = document.getElementById('rangeStart')?.value;
+    const end = document.getElementById('rangeEnd')?.value;
+    if (start && end && start <= end) {
+      rangeAvgData = computeRangeHourlyAverage(start, end);
+      rangeLabel = `Daily Avg (${formatDateDisplay(start)} – ${formatDateDisplay(end)})`;
+    }
+  }
+
+  const chartDom = document.getElementById('chart-call-volume');
+  if (!chartDom) return;
+
+  let chart = echarts.getInstanceByDom(chartDom);
+  if (chart) {
+    if (chart.resizeListener) window.removeEventListener('resize', chart.resizeListener);
+    chart.dispose();
+  }
+  chart = echarts.init(chartDom);
+
+  const primaryColor = '#3874ff';
+  const rangeColor = '#10b981';
+  const textColor = '#64748b';
+
+  const fullHours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+
+  const allValues = [
+    ...(rangeAvgData || []),
+    ...todayData.filter(v => v !== null)
+  ];
+  const dataMax = allValues.length > 0 ? Math.max(...allValues) : 100;
+  const niceMax = dataMax === 0 ? 100 : Math.ceil((dataMax + 9) / 10) * 10;
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      padding: [10, 14],
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e2e8f0',
+      borderWidth: 1,
+      textStyle: { color: '#475569', fontSize: 14 },
+      axisPointer: { type: 'line', lineStyle: { color: '#cbd5e1' } },
+      formatter: function (params) {
+        let result = `<div style="font-weight:600;margin-bottom:6px;">${params[0].name}</div>`;
+        params.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+        params.forEach(p => {
+          const value = p.value ?? 0;
+          result += `<div style="margin-top:4px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:8px;"></span>
+            <span style="color:#64748b;font-size:13px;">${p.seriesName}:</span>
+            <span style="font-weight:600;margin-left:8px;">${value} calls</span>
+          </div>`;
+        });
+        return result;
+      }
     },
-    yaxis: { labels: { style: { colors: "#9ca3af" } } },
-    grid: { borderColor: "rgba(0,0,0,0.05)" },
-    tooltip: { x: { format: "HH:mm" }, y: { formatter: val => val !== null ? val + " calls" : "No calls" } },
-    legend: { position: "top" },
-    dataLabels: { enabled: false }
+    legend: {
+      show: true,
+      orient: 'horizontal',
+      left: '2%',
+      top: '0%',                     // ← Moved higher up (closer to top)
+      itemGap: 24,
+      itemWidth: 12,
+      itemHeight: 12,
+      icon: 'circle',
+      textStyle: { 
+        color: textColor, 
+        fontSize: 13, 
+        fontWeight: 500 
+      },
+      inactiveColor: '#cbd5e1',
+      formatter: function (name) {
+        const names = option.series.map(s => s.name).filter(Boolean);
+        if (name === names[0]) {
+          return 'Comparing: ' + name;
+        }
+        return name;
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      top: '10%',                    // ← Slightly reduced for even more chart space
+      bottom: '2%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: fullHours,
+      axisLabel: { color: textColor, interval: (i) => i % 6 === 0 }
+    },
+    yAxis: {
+      type: 'value',
+      max: niceMax,
+      min: 0,
+      show: false
+    },
+    series: [
+      rangeAvgData && {
+        name: rangeLabel || 'Range Average',
+        type: 'line',
+        data: rangeAvgData,
+        smooth: true,
+        showSymbol: false,
+        z: 6,
+        itemStyle: { color: rangeColor },
+        lineStyle: {
+          width: 2,
+          color: rangeColor,
+          shadowBlur: 6,
+          shadowColor: 'rgba(16, 185, 129, 0.3)'
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(16, 185, 129, 0.2)' },
+            { offset: 1, color: 'rgba(16, 185, 129, 0)' }
+          ])
+        }
+      },
+      {
+        name: formatDateDisplay(selectedDate),
+        type: 'line',
+        data: todayData,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        z: 10,
+        itemStyle: {
+          color: primaryColor,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        lineStyle: {
+          width: 2,
+          color: primaryColor,
+          shadowBlur: 8,
+          shadowColor: 'rgba(56, 116, 255, 0.25)'
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: 'rgba(56, 116, 255, 0.2)' },
+            { offset: 1, color: 'rgba(56, 116, 255, 0)' }
+          ])
+        },
+        emphasis: {
+          itemStyle: {
+            borderWidth: 3,
+            shadowBlur: 10,
+            shadowColor: 'rgba(56, 116, 255, 0.5)'
+          }
+        }
+      }
+    ].filter(Boolean)
   };
 
-  const chartEl = document.getElementById("chart-call-volume");
-  if (chartEl && window.ApexCharts) {
-    let chart = chartEl._chart || new ApexCharts(chartEl, options);
-    chartEl._chart = chart;
-    chart.render();
-  }
+  chart.setOption(option);
+  chart.resizeListener = () => chart.resize();
+  window.addEventListener('resize', chart.resizeListener);
 }
+
+
+function renderRepeatRateChartForSelectedDate() {
+  const calls = getCallsForDate(selectedDate);
+  const agentStatsToday = {};
+  for (const id in calls) {
+    const c = calls[id];
+    const agent = (c.full_name || "Unknown").trim();
+    const phone = c.phone_number;
+    if (!agentStatsToday[agent]) {
+      agentStatsToday[agent] = { total: 0, unique: new Set() };
+    }
+    agentStatsToday[agent].total++;
+    if (phone) agentStatsToday[agent].unique.add(phone);
+  }
+
+  const agentData = [];
+  let totalCalls = 0;
+  let totalUnique = 0;
+  Object.keys(agentStatsToday).forEach(agent => {
+    const s = agentStatsToday[agent];
+    const total = s.total;
+    const unique = s.unique.size;
+    const repeatRate = total > 0 ? Math.round(((total - unique) / total) * 100) : 0;
+    if (repeatRate > 0) {
+      agentData.push({ agent, repeatRate, total, unique });
+    }
+    totalCalls += total;
+    totalUnique += unique;
+  });
+
+  agentData.sort((a, b) => b.repeatRate - a.repeatRate);
+
+  const categories = agentData.map(d => d.agent);
+  const repeatRates = agentData.map(d => d.repeatRate);
+  const overallAvg = totalCalls > 0 ? Math.round(((totalCalls - totalUnique) / totalCalls) * 100) : 0;
+
+  if (window.repeatRateChart && typeof window.repeatRateChart.destroy === 'function') {
+    window.repeatRateChart.destroy();
+  }
+
+  const dom = document.getElementById('repeatRateChart');
+  if (!dom) {
+    console.error("Chart container #repeatRateChart not found");
+    return;
+  }
+
+  if (agentData.length === 0) {
+    dom.innerHTML = '<div class="text-center text-muted p-5">No repeat callers on this date</div>';
+    return;
+  }
+
+  window.repeatRateChart = new ApexCharts(dom, {
+    chart: {
+      type: 'bar',
+      height: 420,
+      toolbar: { show: false },
+      fontFamily: 'Inter, system-ui, sans-serif'
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 4,
+        borderRadiusApplication: 'end',
+        horizontal: true,
+      }
+    },
+    // title: {
+    //   text: `Repeat Caller Rate per Agent – ${formatDateDisplay(selectedDate)}`,
+    //   align: 'left',
+    //   margin: 20,
+    //   style: { fontSize: '16px', fontWeight: '600', color: '#1e293b' }
+    // },
+tooltip: {
+  enabled: true,
+  theme: false,
+  marker: { show: false },
+  style: { fontSize: '0' }, // hides any default text
+  intersect: false,        // helps prevent default pointer styles
+  shared: false,           // prevents multi-series default behavior
+  custom: function({ series, seriesIndex, dataPointIndex, w }) {
+    const rate = series[seriesIndex][dataPointIndex];
+    const agent = w.config.xaxis.categories[dataPointIndex];
+    const dotColor = rate > 30 ? '#dc2626' : rate > 15 ? '#f59e0b' : '#10b981';
+
+    return `
+      <div style="
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        font-family: inherit;
+        font-size: 14px;
+        min-width: 210px;
+        pointer-events: none;
+      ">
+        <div style="
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 8px;
+          font-size: 15px;
+        ">
+          ${agent}
+        </div>
+
+        <div style="display: flex; align-items: center;">
+          <span style="
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: ${dotColor};
+            margin-right: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+          "></span>
+          <span style="color: #64748b; font-size: 13.5px;">Repeat Rate:</span>
+          <span style="
+            font-weight: 700;
+            margin-left: 8px;
+            color: #1e293b;
+          ">
+            ${rate}%
+          </span>
+        </div>
+      </div>
+    `;
+  }
+},
+    dataLabels: { enabled: false },
+    xaxis: {
+      categories: categories,
+      // title: { text: 'Repeat Rate (%)' },  // Commented out to hide the axis title
+      labels: {
+        formatter: val => `${val}%`,
+        style: { colors: '#64748b', fontSize: '12px' }
+      }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '12px' }
+      }
+    },
+    grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+    series: [{ name: 'Repeat Rate', data: repeatRates }],
+    colors: repeatRates.map(rate => rate > 30 ? '#dc2626' : rate > 15 ? '#f59e0b' : '#10b981'),
+    annotations: {
+      xaxis: [{
+        x: overallAvg,
+        strokeDashArray: 6,
+        borderColor: '#64748b',
+label: {
+  borderColor: '#e2e8f0',
+  style: {
+    color: '#1e293b',          // Dark slate text
+    background: '#f8fafc',     // Very light gray background
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  text: `Day Avg: ${overallAvg}%`
+}
+      }]
+    }
+  });
+
+  window.repeatRateChart.render();
+}
+
+function initDatePicker() {
+  const dates = Object.keys(rawData)
+    .filter(d => /^\d{4}-\d{1,2}-\d{1,2}$/.test(d))
+    .sort((a, b) => new Date(b) - new Date(a));
+
+  if (datePickerInstance) datePickerInstance.destroy();
+
+  datePickerInstance = flatpickr('#datePicker', {
+    altInput: true,
+    altFormat: "M j, Y",
+    dateFormat: "Y-m-d",
+    defaultDate: selectedDate,
+    enable: dates,
+    onChange: (selectedDates, dateStr) => {
+      selectedDate = dateStr;
+      updateSelectedDateDisplay(dateStr);
+      renderKPIs();
+      renderCallVolumeChart();
+      renderRepeatRateChartForSelectedDate();
+    },
+    onOpen: () => {
+      const visibleInput = document.querySelector('.input-icon .form-control.input-active') || 
+                           document.querySelector('.flatpickr-input.input-active');
+      if (visibleInput) visibleInput.classList.add('custom-focus');
+    },
+    onClose: () => {
+      const visibleInput = document.querySelector('.input-icon .form-control.input-active') || 
+                           document.querySelector('.flatpickr-input.input-active');
+      if (visibleInput) visibleInput.classList.remove('custom-focus');
+    }
+  });
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnReload')?.addEventListener('click', loadDataFromGitHub);
+});
 
 // Initial load
 loadDataFromGitHub();
