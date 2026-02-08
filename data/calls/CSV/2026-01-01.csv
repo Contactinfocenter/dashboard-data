@@ -8,7 +8,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 0:34,1771688117,A,Md. Dider Hossain,Direct_Agent_Banla,Dhaka,547974,Fiber Cut,135,Bashundhara_ACR_B_25,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 0:39,1716786245,A,Md Shamim,SYLHEL_SUPPORT,Habiganj,1180047,No Internet,,Habiganj_ACR_69,Habiganj,Rural,No Internet,Client
 1/1/2026 0:57,1748550731,A,Md. Dider Hossain,Direct_Agent_Banla,Chunarughat,1279595,No Internet,172,Chunarughat_ACR_240,Chunarughat,Rural,No Internet,Client
-1/1/2026 0:59,1722741149,FCR,Rafiqul Islam,Direct_Agent_Banla,nazipur,430645,MAC Release Request,76,nazipur,Nazipur,Rural,MAC Release,Client
+1/1/2026 0:59,1722741149,FCR,Rafiqul Islam,Direct_Agent_Banla,nazipur,430645,MAC Release Request,76,nazipur,Nazipur,Rural,MAC Release Request,Client
 1/1/2026 1:13,1614987848,A,Md. Dider Hossain,Direct_Agent_Banla,Sylhet_ACR_A_54,682395,Slow Speed,391,Sylhet_ACR_A_54,Sylhet,Rural,Slow Speed,Client
 1/1/2026 1:16,9638592004,FCR,Md. Shohel Khan,Direct_Agent_Banla,Lakshimipur,1176841,Others,161,Lakshimipur_DIST_155,Lakshimipur,Rural,Others,Client
 1/1/2026 1:18,1711429669,A,Md. Shohel Khan,Direct_Agent_Banla,Dhaka,675267,No Internet,286,Bashundhara_ACR_A_24,Dhaka,Urban,No Internet,Client
@@ -35,7 +35,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 7:16,1740799214,A,Md. Dider Hossain,Billing_Querie_bang,,hut-01740799214,OTP,132,N/A,N/A,Rural,OTP,Client
 1/1/2026 7:20,1830959706,FCR,Md. Shohel Khan,Direct_Agent_Banla,Bancharampur_ACR_B_72,898725,Others,44,Bancharampur_ACR_B_72,Bancharampur,Rural,Others,Client
 1/1/2026 7:23,1711573419,FCR,Md. Shohel Khan,Direct_Agent_Banla,Poribag_ACR_38,597810,Payment Process Request,133,Poribag_ACR_38,Dhaka,Urban,Billing Issue,Client
-1/1/2026 7:26,1323470140,A,Md. Dider Hossain,Any_Service_Bangla,Debiganj,663931,MAC Release Request,139,Debiganj_ACR_201,Debiganj,Rural,MAC Release,Client
+1/1/2026 7:26,1323470140,A,Md. Dider Hossain,Any_Service_Bangla,Debiganj,663931,MAC Release Request,139,Debiganj_ACR_201,Debiganj,Rural,MAC Release Request,Client
 1/1/2026 7:28,1909253878,FCR,Md. Shohel Khan,Direct_Agent_Banla,Comilla,120039,Date Extension Request,92,Comilla_ACR_C_67,Comilla,Urban,Billing Issue,Client
 1/1/2026 7:41,1751435352,FCR,Md. Shohel Khan,Direct_Agent_Banla,Natore,712507,Payment Not Updated,192,Natore_Naldanga_ACR-3,Natore,Rural,Billing Issue,Client
 1/1/2026 7:55,1568552097,FCR,Md. Dider Hossain,Direct_Agent_Banla,Nilphamari_ACR_B_104,880857,Billing Queries,120,Nilphamari_ACR_B_104,Nilphamari,Rural,Billing Issue,Client
@@ -139,7 +139,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 10:28,1833002344,A,Rafiqul Islam,Direct_Agent_Banla,Dhaka,1229659,Fiber Cut,203,NOC_ACR_C_35,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 10:31,1877999913,A,Amina Akter,Direct_Agent_Banla,OLD_DHAKA_40,129045,Slow Speed,195,OLD_DHAKA_40,Dhaka,Urban,Slow Speed,Client
 1/1/2026 10:31,1679027996,FCR,Nishat Nawal,Direct_Agent_Banla,Kusthiamirpur_ACR_B_146,587572,Others,177,Kusthiamirpur_ACR_B_146,Kushtiamirpur,Rural,Others,Client
-1/1/2026 10:32,1568364171,A,Abdullah-Al Noman,Direct_Agent_Banla,Nilphamari,432369,MAC Release Request,167,Nilphamari_ACR_A_105,Nilphamari,Rural,MAC Release,Client
+1/1/2026 10:32,1568364171,A,Abdullah-Al Noman,Direct_Agent_Banla,Nilphamari,432369,MAC Release Request,167,Nilphamari_ACR_A_105,Nilphamari,Rural,MAC Release Request,Client
 1/1/2026 10:33,1729854175,A,Rafiqul Islam,SYLHEL_SUPPORT,Habiganj_ACR_69,1172533,Blank Field,307,Habiganj_ACR_69,Habiganj,Rural,Others,Client
 1/1/2026 10:34,1721864095,A,Carnival Sales 1,SALESINBOUND,,phone_number,,49,N/A,N/A,N/A,Others,Client
 1/1/2026 10:35,1733393363,A,Abdullah-Al Noman,SYLHEL_SUPPORT,Habiganj,745355,Fiber Cut,,Habiganj_ACR_69,Habiganj,Rural,Fiber Cut,Client
@@ -217,12 +217,12 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 11:56,1717329458,FCR,Abdullah-Al Noman,Direct_Agent_Banla,Nilphamari,1185977,User Information,244,Nilphamari,Nilphamari,Rural,User Information,Client
 1/1/2026 12:00,1755649051,A,MD. Rahmatullah,Direct_Agent_Banla,Bashundhara_ACR_C_26,106502,Link Shift,155,Bashundhara_ACR_C_26,Dhaka,Urban,Link Shift,Client
 1/1/2026 12:00,1635208433,A,Abdullah-Al Noman,Direct_Agent_Banla,UTD_SEC_4_ACR_9,1287535,Billing Queries,252,UTD_SEC_4_ACR_9,Dhaka,Urban,Billing Issue,Client
-1/1/2026 12:03,1774100760,FCR,MD. ASADUJJAMAN SHOUMIK,Billing_Querie_eng,Gomostapur,1078910,MAC Release Request,153,Gomostapur_ACR_C_38,Gomostapur,Rural,MAC Release,Client
+1/1/2026 12:03,1774100760,FCR,MD. ASADUJJAMAN SHOUMIK,Billing_Querie_eng,Gomostapur,1078910,MAC Release Request,153,Gomostapur_ACR_C_38,Gomostapur,Rural,MAC Release Request,Client
 1/1/2026 12:05,1714331050,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Noaparamdbp,1085988,Router Configuration,304,Noaparamdbp,Noaparamdbp,Rural,Router Configuration,Client
 1/1/2026 12:06,9638841156,A,MD. Rahmatullah,Direct_Agent_Banla,Paduarangunia_ACR_A_75,978179,Blank Field,151,Paduarangunia_ACR_A_75,Paduarangunia,Rural,Others,Client
 1/1/2026 12:06,9638829412,FCR,MD. Rahmatullah,Direct_Agent_Banla,Wazirpur,829971,Payment Not Updated,523,Wazirpur_ACR_248,Wazirpur,Rural,Billing Issue,Client
 1/1/2026 12:08,9638841156,FCR,Jahedul Islam,Direct_Agent_Banla,Paduarangunia_ACR_A_75,978179,No Internet,185,Paduarangunia_ACR_A_75,Paduarangunia,Rural,No Internet,Client
-1/1/2026 12:09,1708127159,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Dhaka,1270167,MAC Release Request,445,Niketon_ACR_37,Dhaka,Urban,MAC Release,Client
+1/1/2026 12:09,1708127159,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Dhaka,1270167,MAC Release Request,445,Niketon_ACR_37,Dhaka,Urban,MAC Release Request,Client
 1/1/2026 12:11,1914876149,A,Jahedul Islam,Direct_Agent_Banla,Shantinagar_ACR_20,857814,Router Configuration,212,Shantinagar_ACR_20,Dhaka,Urban,Router Configuration,Client
 1/1/2026 12:12,1345237005,A,Abdullah-Al Noman,SYLHEL_SUPPORT,Habiganj,557479,Fiber Cut,,Habiganj_ACR_3_71,Habiganj,Rural,Fiber Cut,Client
 1/1/2026 12:13,1739520334,A,Carnival Sales 1,SALESINBOUND,Satkhirasadar,1151750,Refund,65,Satkhirasadar,Satkhirasadar,Rural,Billing Issue,Client
@@ -234,7 +234,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 12:19,1846614688,A,Abdullah-Al Noman,Direct_Agent_Banla,CTG_Jamalkhan_ACR_A_101,180165,No Internet,242,CTG_Jamalkhan_ACR_A_101,Chittagong,Urban,No Internet,Client
 1/1/2026 12:20,1834049804,FCR,MD. Rahmatullah,Direct_Agent_Banla,Tanore_ACR_E_188,656384,Upgradation Request,247,Tanore_ACR_E_188,Tanore,Rural,Upgradation Request,Client
 1/1/2026 12:21,1747087115,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Shyamnagar,1072704,Billing Queries,233,Shyamnagar,Shyamnagar,Rural,Billing Issue,Client
-1/1/2026 12:22,1912726083,FCR,Jahedul Islam,Direct_Agent_Banla,Baisaribanaripara_ACR_31,1305325,MAC Release Request,105,Baisaribanaripara_ACR_31,Baisaribanaripara,Rural,MAC Release,Client
+1/1/2026 12:22,1912726083,FCR,Jahedul Islam,Direct_Agent_Banla,Baisaribanaripara_ACR_31,1305325,MAC Release Request,105,Baisaribanaripara_ACR_31,Baisaribanaripara,Rural,MAC Release Request,Client
 1/1/2026 12:22,1623439848,A,Jahedul Islam,SYLHEL_SUPPORT,Habiganj,432015,Fiber Cut,,Habiganj_ACR_69,Habiganj,Rural,Fiber Cut,Client
 1/1/2026 12:23,1701208007,A,Abdullah-Al Noman,Direct_Agent_Banla,Habiganj,1149322,Fiber Cut,227,Habiganj_ACR_69,Habiganj,Rural,Fiber Cut,Client
 1/1/2026 12:24,1755596471,A,MD. Rahmatullah,Direct_Agent_Banla,-1,0,New Sales Query,223,N/A,N/A,N/A,New Sales Query,Client
@@ -255,7 +255,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 12:39,1719618623,FCR,MD. Rahmatullah,Direct_Agent_Banla,Bhangura_ACR_162,923940,Billing Queries,135,Bhangura_ACR_162,Bhangura,Rural,Billing Issue,Client
 1/1/2026 12:40,1570282575,A,MD. Rahmatullah,Direct_Agent_Banla,Baridhara_ACR_22,628909,Blank Field,177,Baridhara_ACR_22,Dhaka,Urban,Others,Client
 1/1/2026 12:41,1635262190,A,Rafiqul Islam,Direct_Agent_Banla,Paba,676177,No Internet,340,Paba_ACR_247,Paba,Rural,No Internet,Client
-1/1/2026 12:42,1974955546,A,Carnival Sales 1,SALESINBOUND,Nikunjo_ACR_12,1274953,MAC Release Request,67,Nikunjo_ACR_12,Dhaka,Urban,MAC Release,Client
+1/1/2026 12:42,1974955546,A,Carnival Sales 1,SALESINBOUND,Nikunjo_ACR_12,1274953,MAC Release Request,67,Nikunjo_ACR_12,Dhaka,Urban,MAC Release Request,Client
 1/1/2026 12:43,1974955546,A,MD. Rahmatullah,Direct_Agent_Banla,Nikunjo_ACR_12,1274953,Fiber Cut,283,Nikunjo_ACR_12,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 12:45,1734212167,FCR,Abdullah-Al Noman,Direct_Agent_Banla,Comilla_Poilceline_ACR_B_71,198704,No Internet,225,Comilla_Poilceline_ACR_B_71,Comilla,Urban,No Internet,Client
 1/1/2026 12:48,1837244797,A,Abdullah-Al Noman,Direct_Agent_Banla,Mohammadpur_ACR_4,1133057,Invoice Request,269,Mohammadpur_ACR_4,Dhaka,Urban,Billing Issue,Client
@@ -339,7 +339,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 14:15,1914667475,A,Jahedul Islam,Direct_Agent_Banla,Narail,283697,No Internet,246,Narail,narail,Rural,No Internet,Client
 1/1/2026 14:15,1983341633,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Morrelganj,865658,No Internet,105,Morrelganj_ACR_A_231,Morrelganj,Rural,No Internet,Client
 1/1/2026 14:16,1711952237,A,Nazmus Sakib Swapnil,Direct_Agent_English,Niketon_ACR_37,1190292,Fluctuation issue,216,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
-1/1/2026 14:16,9638897620,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Chilmari_ACR_113,1064242,Callback request,188,Chilmari_ACR_113,Ulipur,Rural,Callback request,Client
+1/1/2026 14:16,9638897620,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Chilmari_ACR_113,1064242,Callback request,188,Chilmari_ACR_113,Ulipur,Rural,Callback request,Client
 1/1/2026 14:16,1722883029,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Domar,821306,Re-activation Query,249,Domar,Domar,Rural,Billing Issue,Client
 1/1/2026 14:17,1850009295,A,Carnival Sales 1,SALESINBOUND,,phone_number,,95,N/A,N/A,N/A,Others,Client
 1/1/2026 14:18,1521464264,FCR,Akash Debnath,Direct_Agent_Banla,Natore,1135024,Discontinue,136,Natore_ACR_6,Natore,Rural,Discontinue,Client
@@ -366,7 +366,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 14:43,1711504418,A,Nishat Nawal,Direct_Agent_English,Niketon_ACR_37,103265,Blank Field,247,Niketon_ACR_37,Dhaka,Urban,Others,Client
 1/1/2026 14:47,1316053335,A,Rumana Nasrin,Direct_Agent_Banla,Niketon_ACR_37,846687,Fluctuation issue,134,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
 1/1/2026 14:47,1611499395,A,MD. Rahmatullah,Direct_Agent_Banla,Amadikoyra,771531,Refund,110,Amadikoyra,Amadikoyra,Rural,Billing Issue,Client
-1/1/2026 14:47,1759165666,FCR,Nazmus Sakib Swapnil,Direct_Agent_Banla,Gomostapur,1288861,MAC Release Request,62,Gomostapur_ACR_35,Gomostapur,Rural,MAC Release,Client
+1/1/2026 14:47,1759165666,FCR,Nazmus Sakib Swapnil,Direct_Agent_Banla,Gomostapur,1288861,MAC Release Request,62,Gomostapur_ACR_35,Gomostapur,Rural,MAC Release Request,Client
 1/1/2026 14:47,1893148598,FCR,Amina Akter,Direct_Agent_Banla,Gangachara,592667,No Internet,128,Gangachara,Gangachara,Rural,No Internet,Client
 1/1/2026 14:49,9611511617,A,Nishat Nawal,Direct_Agent_Banla,Shahrasti,831761,Refund,139,Shahrasti,Shahrasti,Rural,Billing Issue,Client
 1/1/2026 14:49,1810152558,A,MD. Rahmatullah,Direct_Agent_Banla,Dhaka,778457,Fluctuation issue,158,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
@@ -413,14 +413,14 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 15:19,1717700507,A,Rumana Nasrin,Direct_Agent_Banla,Dhaka,438918,Fiber Cut,149,Lalmatia_ACR_254,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 15:20,1712618354,A,Hasna Hena,Direct_Agent_Banla,Dhaka,110402,No Internet,142,UTD_SEC_14_ACR_11,Dhaka,Urban,No Internet,Client
 1/1/2026 15:24,1884959239,FCR,Hasna Hena,Direct_Agent_Banla,Debiganj,970395,User Information,144,Debiganj,Debiganj,Rural,User Information,Client
-1/1/2026 15:25,1756777384,FCR,Nishat Nawal,Direct_Agent_Banla,Hili,727827,MAC Release Request,94,Hili,Hili,Rural,MAC Release,Client
+1/1/2026 15:25,1756777384,FCR,Nishat Nawal,Direct_Agent_Banla,Hili,727827,MAC Release Request,94,Hili,Hili,Rural,MAC Release Request,Client
 1/1/2026 15:26,1317995633,FCR,Abdullah-Al Noman,SYLHEL_SUPPORT,Habiganj_ACR_69,557479,Blank Field,62,Habiganj_ACR_3_71,Habiganj,Rural,Others,Client
 1/1/2026 15:26,1751557413,A,Amina Akter,Direct_Agent_Banla,Habiganj_ACR_2_70 ,1096209,Fiber Cut,347,Habiganj_ACR_69,Habiganj,Rural,Fiber Cut,Client
 1/1/2026 15:26,1782497411,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,phone_number,Others,222,N/A,N/A,N/A,Others,Client
 1/1/2026 15:27,1312749983,FCR,Rafiqul Islam,Direct_Agent_Banla,Bashundhara_ACR_C_26,549531,Slow Speed,172,Bashundhara_ACR_C_26,Dhaka,Urban,Slow Speed,Client
 1/1/2026 15:30,1712584723,A,Hasna Hena,SYLHEL_SUPPORT,Sylhet_ACR_B_54,800910,Router Configuration,83,Sylhet_ACR_B_54,Sylhet,Rural,Router Configuration,Client
 1/1/2026 15:30,1757238890,A,Abdullah-Al Noman,Direct_Agent_Banla,Natore,542706,No Internet,27,Natore_ACR_237,Natore,Rural,No Internet,Client
-1/1/2026 15:30,1774217000,FCR,Nishat Nawal,Direct_Agent_Banla,Badargonj,992670,MAC Release Request,124,Badargonj,Badargonj,Rural,MAC Release,Client
+1/1/2026 15:30,1774217000,FCR,Nishat Nawal,Direct_Agent_Banla,Badargonj,992670,MAC Release Request,124,Badargonj,Badargonj,Rural,MAC Release Request,Client
 1/1/2026 15:30,1737808223,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Thakurgaon,1183799,Others,197,Thakurgaon,Thakurgaon,Rural,Others,Client
 1/1/2026 15:30,1731140455,FCR,Nazmus Sakib Swapnil,Direct_Agent_Banla,Sreemangal,720560,Refund,317,Sreemangal_ACR_209,Sreemangal,Rural,Billing Issue,Client
 1/1/2026 15:31,1735029522,A,Halima Akhter,Direct_Agent_Banla,Rajnagar,600499,Refund,313,Rajnagar_ACR_236,Rajnagar,Rural,Billing Issue,Client
@@ -438,7 +438,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 15:39,1755551167,A,Nahidul Islam,Direct_Agent_Banla,Dhaka,106297,No Internet,235,Baridhara_ACR_22,Dhaka,Urban,No Internet,Client
 1/1/2026 15:40,9638698036,FCR,Jahedul Islam,Direct_Agent_Banla,,1056997,New Sales Query,156,Satkhirasadar,Satkhirasadar,Rural,New Sales Query,Client
 1/1/2026 15:41,1608984296,A,Carnival Sales 1,SALESINBOUND,,phone_number,,79,N/A,N/A,N/A,Others,Client
-1/1/2026 15:42,1973994694,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,UTD_SEC_11_ACR_10,814527,MAC Release Request,187,UTD_SEC_11_ACR_10,Dhaka,Urban,MAC Release,Client
+1/1/2026 15:42,1973994694,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,UTD_SEC_11_ACR_10,814527,MAC Release Request,187,UTD_SEC_11_ACR_10,Dhaka,Urban,MAC Release Request,Client
 1/1/2026 15:42,1604771378,FCR,Nazmus Sakib Swapnil,Direct_Agent_Banla,Dhaka,1075429,User Information,107,Niketon_ACR_37,Dhaka,Urban,User Information,Client
 1/1/2026 15:45,1894558655,A,Halima Akhter,Direct_Agent_Banla,Jahangirnagar_ACR_148,1099847,Slow Speed,556,Jahangirnagar_ACR_148,Jahangirnagar,Rural,Slow Speed,Client
 1/1/2026 15:46,1796470393,FCR,Abdullah-Al Noman,Direct_Agent_Banla,Natore,273433,User Information,193,Natore_Naldanga_ACR_245,Natore,Rural,User Information,Client
@@ -537,7 +537,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 16:57,1716736470,FCR,Amina Akter,Billing_Querie_bang,Kapasia,1158304,Billing Queries,142,Kapasia_ACR_4,Kapasia,Rural,Billing Issue,Client
 1/1/2026 16:57,1601824282,A,FAHIM MOSTOFA,Direct_Agent_Banla,Harinakundu,275110,Refund,415,Harinakundu,Harinakundu,Rural,Billing Issue,Client
 1/1/2026 16:58,1948630230,A,Jahedul Islam,SYLHEL_SUPPORT,Habiganj_ACR_69,965045,No Internet,56,Habiganj_ACR_69,Habiganj,Rural,No Internet,Client
-1/1/2026 16:58,1328917910,A,Nahidul Islam,SYLHEL_SUPPORT,Habiganj_ACR_2_70 ,852554,Callback request,61,Habiganj_ACR_3_71,Habiganj,Rural,Callback request,Client
+1/1/2026 16:58,1328917910,A,Nahidul Islam,SYLHEL_SUPPORT,Habiganj_ACR_2_70 ,852554,Callback request,61,Habiganj_ACR_3_71,Habiganj,Rural,Callback request,Client
 1/1/2026 16:58,1714119494,A,Akash Debnath,Direct_Agent_Banla,Dhaka,134863,No Internet,284,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
 1/1/2026 16:59,1740786316,FCR,Amina Akter,Direct_Agent_Banla,Bashdohostkh,744853,No Internet,262,Bashdohostkh,Bashdohostkh,Rural,No Internet,Client
 1/1/2026 16:59,1614433517,FCR,Rumana Nasrin,Direct_Agent_Banla,Bhomra_ACR_B_95,1102819,Slow Speed,288,Bhomra_ACR_B_95,Bhomra,Rural,Slow Speed,Client
@@ -602,7 +602,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 17:44,1743038501,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Lohagaranrl,1142827,Fiber Cut,131,Narail_Matiamalipara_ACR_7,Narail,Rural,Fiber Cut,Client
 1/1/2026 17:44,1732899321,A,Nahidul Islam,Direct_Agent_Banla,Jessorersadar_ACR_233,1267422,Upgradation Request,181,Jessorersadar_ACR_233,Jessorersadar,Rural,Upgradation Request,Client
 1/1/2026 17:44,1789449047,FCR,Akash Debnath,Direct_Agent_Banla,Khansama,1020455,New Sales Query,187,Khansama,Khansama,Rural,New Sales Query,Client
-1/1/2026 17:45,1518385369,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,phone_number,Callback request,101,N/A,N/A,N/A,Callback request,Client
+1/1/2026 17:45,1518385369,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,phone_number,Callback request,101,N/A,N/A,N/A,Callback request,Client
 1/1/2026 17:47,1595626565,A,Rafiqul Islam,Direct_Agent_Banla,Daulatpur,989735,Payment Not Updated,194,Daulatpur_ACR_132,Daulatpur,Rural,Billing Issue,Client
 1/1/2026 17:47,1781748288,A,Amina Akter,Direct_Agent_Banla,Thakurgaon,1120698,Refund,304,Thakurgaon,Thakurgaon,Rural,Billing Issue,Client
 1/1/2026 17:49,1712949160,A,Carnival Sales 1,SALESINBOUND,Ullapara_ACR_A_224,822170,,52,Ullapara_ACR_A_224,Ullapara,Rural,Others,Client
@@ -627,7 +627,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 18:01,1609613111,FCR,Halima Akhter,Direct_Agent_Banla,,hut-01609613111,Login Problem,162,N/A,N/A,Rural,Login Problem,Client
 1/1/2026 18:03,1788281244,A,Md. Monirul Islam,Direct_Agent_Banla,,phone_number,Others,29,N/A,N/A,N/A,Others,Client
 1/1/2026 18:04,1718072348,A,MD. Rahmatullah,Direct_Agent_Banla,Manda,1245805,Refund,419,Manda,Manda,Rural,Billing Issue,Client
-1/1/2026 18:05,1712550055,A,Nahidul Islam,Any_Service_Bangla,Domar_ACR_220,627288,Callback request,,Domar_ACR_220,Domar,Rural,Callback request,Client
+1/1/2026 18:05,1712550055,A,Nahidul Islam,Any_Service_Bangla,Domar_ACR_220,627288,Callback request,,Domar_ACR_220,Domar,Rural,Callback request,Client
 1/1/2026 18:06,1765323228,FCR,Jahedul Islam,Direct_Agent_Banla,Daulatpur,800262,Re-activation Query,152,Daulatpur_Mothurapur_ACR_146,Daulatpur,Rural,Billing Issue,Partner/Reseller
 1/1/2026 18:06,1788281244,A,Nahidul Islam,Direct_Agent_Banla,Domar,1255163,Refund,197,Domar,Domar,Rural,Billing Issue,Client
 1/1/2026 18:08,1876185993,A,Nahidul Islam,Direct_Agent_Banla,Nagarkanda,916802,No Internet,192,Nagarkanda,Nagarkanda,Rural,No Internet,Client
@@ -685,9 +685,9 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 18:52,1980118012,A,Nahidul Islam,Direct_Agent_Banla,,1011833,User Information,178,Kusthiamirpur_ACR_E_42,kushtiamirpur,Rural,User Information,Client
 1/1/2026 18:54,1516501873,A,Jahedul Islam,Direct_Agent_Banla,Kotchandpur,994268,Refund,261,Kotchandpur,Kotchandpur,Rural,Billing Issue,Client
 1/1/2026 18:55,1712614645,A,Nahidul Islam,Direct_Agent_Banla,,phone_number,Slow Speed,72,N/A,N/A,N/A,Slow Speed,Client
-1/1/2026 18:56,1891448791,FCR,Nahidul Islam,Direct_Agent_Banla,Baraigram_ACR_37,733982,MAC Release Request,136,Baraigram_ACR_37,Baraigram,Rural,MAC Release,Client
+1/1/2026 18:56,1891448791,FCR,Nahidul Islam,Direct_Agent_Banla,Baraigram_ACR_37,733982,MAC Release Request,136,Baraigram_ACR_37,Baraigram,Rural,MAC Release Request,Client
 1/1/2026 18:56,1827870111,FCR,MD. Rahmatullah,Direct_Agent_Banla,Banasree_ACR_13,219999,No Internet,84,Banasree_ACR_13,Dhaka,Urban,No Internet,Client
-1/1/2026 18:56,1852605232,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,hut-01852605232,MAC Release Request,238,N/A,N/A,Rural,MAC Release,Client
+1/1/2026 18:56,1852605232,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,hut-01852605232,MAC Release Request,238,N/A,N/A,Rural,MAC Release Request,Client
 1/1/2026 18:57,1935332613,A,Md. Monirul Islam,Direct_Agent_Banla,Natore_ACR_237,644719,Slow Speed,86,Natore_ACR_237,Natore,Rural,Slow Speed,Client
 1/1/2026 18:59,1914442861,A,Nahidul Islam,Direct_Agent_Banla,Kapasia,750596,Fiber Cut,199,Kapasia_ACR_4,Kapasia,Rural,Fiber Cut,Client
 1/1/2026 19:00,1935332613,FCR,Nazmus Sakib Swapnil,Direct_Agent_Banla,Natore_ACR_237,644719,Others,138,Natore_ACR_237,Natore,Rural,Others,Client
@@ -719,10 +719,10 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 19:19,1708511854,A,Nahidul Islam,Direct_Agent_Banla,Sirajganjsadar,471083,No Internet,132,Sirajganjsadar_ACR_B_111,Sirajganjsadar,Rural,No Internet,Client
 1/1/2026 19:20,1877999930,A,Jahedul Islam,Direct_Agent_Banla,OLD_DHAKA_40,136000,Slow Speed,242,OLD_DHAKA_40,Dhaka,Urban,Slow Speed,Client
 1/1/2026 19:22,1776777143,A,Nahidul Islam,Direct_Agent_Banla,Nazipur,1108596,Fiber Cut,195,Nazipur,Nazipur,Rural,Fiber Cut,Client
-1/1/2026 19:23,1313358374,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Tarakandi,1087079,Callback request,249,Tarakandi_ACR_74,Tarakandi,Rural,Callback request,Client
+1/1/2026 19:23,1313358374,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Tarakandi,1087079,Callback request,249,Tarakandi_ACR_74,Tarakandi,Rural,Callback request,Client
 1/1/2026 19:23,1833182557,A,MD. Rahmatullah,Direct_Agent_Banla,Dhaka,390059,No Internet,211,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
 1/1/2026 19:24,1753932036,FCR,Nahidul Islam,Direct_Agent_Banla,CTG_Khulshi_ACR_103,428598,No Internet,312,CTG_Khulshi_ACR_103,Chittagong,Urban,No Internet,Client
-1/1/2026 19:26,1920733182,A,FAHIM MOSTOFA,Direct_Agent_Banla,Indurkani,1015460,Callback request,470,Indurkani,Indurkani,Rural,Callback request,Client
+1/1/2026 19:26,1920733182,A,FAHIM MOSTOFA,Direct_Agent_Banla,Indurkani,1015460,Callback request,470,Indurkani,Indurkani,Rural,Callback request,Client
 1/1/2026 19:26,1314514813,A,Md. Monirul Islam,Direct_Agent_Banla,Naogaon,1282796,Refund,116,Naogaon,Naogaon,Rural,Billing Issue,Client
 1/1/2026 19:27,1711834688,A,Nazmus Sakib Swapnil,Direct_Agent_English,Gulshan_1_ACR_28,661244,Blank Field,198,Gulshan_1_ACR_28,Dhaka,Urban,Others,Client
 1/1/2026 19:27,1821603766,FCR,MD. Rahmatullah,Direct_Agent_Banla,Daulatpur_ACR_C_16,1259693,Date Extension Request,124,Daulatpur_ACR_C_16,Daulatpur,Rural,Billing Issue,Client
@@ -778,7 +778,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 20:20,9658057603,A,Jahedul Islam,Direct_Agent_Banla,Moulvibazarsadar_ACR_255,671516,Blank Field,137,Moulvibazarsadar_ACR_255,Moulvibazarsadar,Rural,Others,Client
 1/1/2026 20:23,1886365461,A,FAHIM MOSTOFA,Direct_Agent_Banla,Rampal,1028704,Refund,140,Rampal,Rampal,Rural,Billing Issue,Client
 1/1/2026 20:24,1996898235,A,FAHIM MOSTOFA,Direct_Agent_Banla,Naogaon,978642,Refund,380,Naogaon,Naogaon,Rural,Billing Issue,Client
-1/1/2026 20:25,9611494058,FCR,Jahedul Islam,Billing_Querie_bang,Kamarkhand,765165,Callback request,109,Kamarkhand_ACR_254,Kamarkhand,Rural,Callback request,Client
+1/1/2026 20:25,9611494058,FCR,Jahedul Islam,Billing_Querie_bang,Kamarkhand,765165,Callback request,109,Kamarkhand_ACR_254,Kamarkhand,Rural,Callback request,Client
 1/1/2026 20:26,9638290099,A,MD. Rahmatullah,Direct_Agent_Banla,Tomsom_Bridge_ACR_A_73,134967,New Sales Query,328,Tomsom_Bridge_ACR_A_73,Comilla,Urban,New Sales Query,Client
 1/1/2026 20:26,1886365461,A,Nahidul Islam,Direct_Agent_Banla,Rampal,1028704,Refund,391,Rampal,Rampal,Rural,Billing Issue,Client
 1/1/2026 20:27,1734662893,FCR,Jahedul Islam,Any_Service_Bangla,Kumarkhalisadar_ACR_100,1263166,No Internet,,Kumarkhalisadar_ACR_100,Kumarkhalisadar,Rural,No Internet,Client
@@ -807,7 +807,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 20:53,1766277216,A,FAHIM MOSTOFA,Direct_Agent_English,Dhaka,130625,No Internet,359,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
 1/1/2026 20:53,9638709820,A,Md. Monirul Islam,Direct_Agent_Banla,Dighalia,811883,Others,59,Dighalia,Dighalia,Rural,Others,Client
 1/1/2026 20:56,1826182892,FCR,Jahedul Islam,Any_Service_Bangla,Joldhaka_ACR_196,1284158,New Sales Query,,Joldhaka_ACR_196,Joldhaka,Rural,New Sales Query,Client
-1/1/2026 20:57,9638852604,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Banani_ACR_21,1205717,Callback request,190,Banani_ACR_21,Dhaka,Urban,Callback request,Client
+1/1/2026 20:57,9638852604,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Banani_ACR_21,1205717,Callback request,190,Banani_ACR_21,Dhaka,Urban,Callback request,Client
 1/1/2026 20:58,1916299568,FCR,Nazmus Sakib Swapnil,Billing_Querie_bang,Dhaka,592921,Date Extension Request,127,Bashundhara_ACR_C_26,Dhaka,Urban,Billing Issue,Client
 1/1/2026 20:59,1706745008,FCR,Jahedul Islam,Direct_Agent_Banla,Raigonj_ACR_73,811213,Slow Speed,134,Raigonj_ACR_73,Raigonj,Rural,Slow Speed,Client
 1/1/2026 21:00,1522130042,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Chapainawabganj,1245818,Refund,230,Chapainawabganj,Chapainawabganj,Rural,Billing Issue,Client
@@ -817,7 +817,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 21:04,1738080362,A,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,Ranisankail,264353,No Internet,190,Ranisankail_ACR_125,Ranisankail,Rural,No Internet,Client
 1/1/2026 21:06,1911310997,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Dhaka,101065,No Internet,205,Niketon_ACR_37,Dhaka,Urban,No Internet,Client
 1/1/2026 21:06,1730696697,A,FAHIM MOSTOFA,Direct_Agent_Banla,Atraisadar_ACR_162,803699,Fluctuation issue,182,Atraisadar_ACR_162,Atraisadar,Rural,No Internet,Client
-1/1/2026 21:09,1891450069,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,hut-01891450069,MAC Release Request,175,N/A,N/A,Rural,MAC Release,Client
+1/1/2026 21:09,1891450069,FCR,MD. ASADUJJAMAN SHOUMIK,Direct_Agent_Banla,,hut-01891450069,MAC Release Request,175,N/A,N/A,Rural,MAC Release Request,Client
 1/1/2026 21:09,1531965057,A,Jahedul Islam,Direct_Agent_Banla,Dhaka,1080524,Fiber Cut,131,Niketon_ACR_37,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 21:11,1819136098,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Baridhara_ACR_22,1002347,Billing Queries,83,Baridhara_ACR_22,Dhaka,Urban,Billing Issue,Client
 1/1/2026 21:14,1522130042,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Chapainawabganj,1245818,Refund,251,Chapainawabganj,Chapainawabganj,Rural,Billing Issue,Client
@@ -856,7 +856,7 @@ call_date,phone_number,status,full_name,campaign_id,address3,email,comments,acht
 1/1/2026 22:03,1776901953,A,Md. Monirul Islam,Direct_Agent_Banla,Shyamnagar,879627,Billing Queries,324,Shyamnagar,Shyamnagar,Rural,Billing Issue,Client
 1/1/2026 22:05,1303060997,A,Nazmus Sakib Swapnil,Direct_Agent_Banla,Ghatail,1117264,No Internet,129,Ghatail_ACR_119,Ghatail,Rural,No Internet,Client
 1/1/2026 22:06,1631827787,FCR,FAHIM MOSTOFA,Direct_Agent_Banla,Mymensing_DO_ACR_A_242,269157,Billing Queries,449,Mymensing_DO_ACR_A_242,Mymensingh,Rural,Billing Issue,Client
-1/1/2026 22:07,1643804589,FCR,Md Shamim,Direct_Agent_Banla,Habiganj_ACR_3_71,633542,MAC Release Request,249,Habiganj_ACR_69,Habiganj,Rural,MAC Release,Client
+1/1/2026 22:07,1643804589,FCR,Md Shamim,Direct_Agent_Banla,Habiganj_ACR_3_71,633542,MAC Release Request,249,Habiganj_ACR_69,Habiganj,Rural,MAC Release Request,Client
 1/1/2026 22:07,1711086118,A,Akash Debnath,Direct_Agent_Banla,Dhaka,836984,Fiber Cut,140,Niketon_ACR_37,Dhaka,Urban,Fiber Cut,Client
 1/1/2026 22:09,1716095877,A,Akash Debnath,Direct_Agent_Banla,Habiganj,228249,Fiber Cut,188,Habiganj_ACR_2_70 ,Habiganj,Rural,Fiber Cut,Client
 1/1/2026 22:09,1321350421,A,Nazmus Sakib Swapnil,Any_Service_Bangla,Nageshwari,1197190,Refund,,Nageshwari,Nageshwari,Rural,Billing Issue,Client
