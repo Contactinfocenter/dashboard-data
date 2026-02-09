@@ -24,7 +24,6 @@ print("CSV Files found:", csv_files)
 for filename in csv_files:
 
     file_path = os.path.join(CSV_FOLDER, filename)
-
     print(f"\nProcessing {filename}...")
 
     try:
@@ -56,16 +55,25 @@ for filename in csv_files:
             except:
                 pass  # fallback stays
 
-        # Convert row values
-        call_data = {k: (None if pd.isna(v) else v) for k, v in row.to_dict().items()}
+        # Convert row values (NaN → None)
+        call_data = {
+            k: (None if pd.isna(v) else v)
+            for k, v in row.to_dict().items()
+        }
 
         # Final mapping to required JSON format
         formatted = {}
         for k, v in call_data.items():
+
             if k == "call_reason":
-                formatted["Call Reason"] = v
+                if isinstance(v, str):
+                    formatted["Call Reason"] = " ".join(v.split())
+                else:
+                    formatted["Call Reason"] = v
+
             elif k == "client_type":
                 formatted["Client type"] = v
+
             else:
                 formatted[k] = v
 
