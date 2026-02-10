@@ -74,6 +74,15 @@ for filename in csv_files:
             elif k == "client_type":
                 formatted["Client type"] = v
 
+            elif k == "acht":
+                # If acht is "0", empty, or spaces → set to "1"
+                if v is None:
+                    formatted["acht"] = "1"
+                elif isinstance(v, str) and v.strip() in ("", "0"):
+                    formatted["acht"] = "1"
+                else:
+                    formatted["acht"] = v
+
             else:
                 formatted[k] = v
 
